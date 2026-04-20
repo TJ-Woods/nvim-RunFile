@@ -109,11 +109,11 @@ function M.run_file()
             run_cmd('"' .. build_file .. '"')
         else
             local exe = base_path .. (os_name == "Windows_NT" and ".exe" or "")
+            -- Only runs the file if compilation is successful
+            run_cmd(compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"')
             if M.config.cleanup then
                 run_cmd((os_name == "Windows_NT") and "del " or "rm -f " .. exe)
             end
-            -- Only runs the file if compilation is successful
-            run_cmd(compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"')
         end
 
     elseif ext == "ps1" then
