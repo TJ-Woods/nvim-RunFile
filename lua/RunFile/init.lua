@@ -87,7 +87,7 @@ function M.cleanup()
     local exe = get_exe_path()
     -- Check if file exists before trying to delete
     if vim.loop.fs_stat(exe) then
-        local success, err = vim.loop.fs_unlink(exe)
+        local success, err = vim.uv.fs_unlink(exe)
         if success then
             vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe, ":t"), vim.log.levels.INFO)
         else
