@@ -24,6 +24,10 @@ require("RunFile").setup({})
 Options are to be placed inside the "{}" when calling .setup().
 
 Options include the following defaults:
-* terminal_size = 0.25  -- % of current buffer the terminal window will take up
-* split = "split"       -- "split" or "vslpit"
-* cleanup = false       -- whether built files are cleaned up (deleteed) after running
+``` lua
+{
+    terminal_size = 0.25,  -- % of current buffer the terminal window will take up
+    split = "split",       -- "split" or "vslpit"
+    cleanup = false,       -- whether built files are cleaned up (deleteed) after running
+}
+```
