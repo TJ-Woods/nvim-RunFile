@@ -83,6 +83,19 @@ local function find_extra_file(file_name, target_name)
     return nil
 end
 
+function M.cleanup()
+    local exe = get_exe_path()
+    -- Check if file exists before trying to delete
+    if vim.loop.fs_stat(exe) then
+        local success, err = vim.loop.fs_unlink(exe)
+        if success then
+            vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe, ":t"), vim.log.levels.INFO)
+        else
+            vim.notify("Cleanup failed: " .. (err or "unknown error"), vim.log.levels.ERROR)
+        end
+    end
+end
+
 function M.run_file()
     local file_name = vim.api.nvim_buf_get_name(0)
     if file_name == "" then return end
@@ -111,8 +124,9 @@ function M.run_file()
             local exe = base_path .. (os_name == "Windows_NT" and ".exe" or "")
             -- Only runs the file if compilation is successful
             run_cmd(compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"')
+            -- Clean up built executable file
             if M.config.cleanup then
-                run_cmd((os_name == "Windows_NT") and "del " or "rm -f " .. exe)
+                M.cleanup()
             end
         end
 
