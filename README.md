@@ -16,9 +16,9 @@ More to come!
 
 # Setup
 This plugin requires 
-''' lua
+``` lua
 require("RunFile").setup({})
-'''
+```
 
 # Options
 Options are to be placed inside the "{}" when calling .setup().
