@@ -57,9 +57,8 @@ local function get_os()
     return vim.loop.os_uname().sysname
 end
 
-local function run_cmd(cmd, omit_insertion)
-    local inpt = omit_insertion and "" or "i"
-    local command = vim.api.nvim_replace_termcodes(inpt .. cmd .. "<CR>", true, false, true)
+local function run_cmd(cmd)
+    local command = vim.api.nvim_replace_termcodes("i" .. cmd .. "<CR>", true, false, true)
     vim.api.nvim_feedkeys(command, "t", false)
 end
 
@@ -97,27 +96,31 @@ function M.run_file()
     -- Logic Mapping
     if ext == "py" then
         local source = find_extra_file(file_name, "source")
-        run_cmd(source and ('"' .. source .. '"') or ('python3 "' .. file_name .. '"'), false)
+        run_cmd(source and ('"' .. source .. '"') or ((os_name == "Windows_NT") and "python" or "python3" .. ' "' .. file_name .. '"'))
 
     elseif ext == "js" then
-        run_cmd('node "' .. file_name .. '"', false)
+        run_cmd('node "' .. file_name .. '"')
 
     elseif ext == "c" or ext == "cpp" then
         local compiler = (ext == "c") and "gcc" or "g++"
         local build_file = find_extra_file(file_name, "build")
 
         if build_file then
-            run_cmd('"' .. build_file .. '"', false)
+            run_cmd('"' .. build_file .. '"')
         else
             local exe = base_path .. (os_name == "Windows_NT" and ".exe" or "")
-            run_cmd(compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"', false)
+            if M.config.cleanup then
+                run_cmd((os_name == "Windows_NT") and "del " or "rm -f " .. exe)
+            end
+            -- Only runs the file if compilation is successful
+            run_cmd(compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"')
         end
 
     elseif ext == "ps1" then
-        run_cmd('powershell "' .. file_name .. '"', false)
+        run_cmd('powershell "' .. file_name .. '"')
 
     elseif vim.tbl_contains({"sh", "bat"}, ext) then
-        run_cmd('"' .. file_name .. '"', false)
+        run_cmd('"' .. file_name .. '"')
 
     else
         vim.notify("Unsupported file type: " .. ext, vim.log.levels.WARN)
