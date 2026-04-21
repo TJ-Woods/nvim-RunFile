@@ -65,6 +65,9 @@ local function run_cmd(cmd, on_finish)
 
     local buf = vim.api.nvim_get_current_buf()
 
+    -- Set the buffer to 'wipe' so it deletes itself when the window closes
+    vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+
     -- Start the job in the terminal buffer
     vim.fn.termopen(cmd, {
         on_exit = function(_, exit_code, _)
@@ -159,7 +162,6 @@ function M.run_file()
         if build_file then
             cmd = '"' .. build_file .. '"'
         else
-            local exe = base_path .. (os_name == "Windows_NT" and ".exe" or "")
             -- Only runs the file if compilation is successful
             cmd = compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"'
         end
