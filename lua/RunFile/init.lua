@@ -54,7 +54,7 @@ function M.setup(opts)
 end
 
 local function get_os()
-    return vim.loop.os_uname().sysname
+    return vim.uv.os_uname().sysname
 end
 
 local function run_cmd(cmd)
@@ -70,7 +70,7 @@ end
 
 local function search_dir(dir, target)
     local path = dir .. target
-    local stat = vim.loop.fs_stat(path)
+    local stat = vim.uv.fs_stat(path)
     return stat ~= nil
 end
 
@@ -83,10 +83,27 @@ local function find_extra_file(file_name, target_name)
     return nil
 end
 
-function M.cleanup()
-    local exe = get_exe_path()
+local function get_exe_path(file_path)
+    local os_name = get_os()
+    local ext = vim.fn.fnamemodify(file_path, ":e")
+    local base_path = vim.fn.fnamemodify(file_path, ":p:r")
+
+    -- Define which extensions produce an executable
+    if ext == "c" or ext == "cpp" then
+        if os_name == "Windows_NT" then
+            return base_path .. ".exe"
+        else
+            return base_path
+        end
+    end
+
+    return nil -- Not a compiled file type
+end
+
+function M.cleanup(exe)
+    if not exe or exe == "" then return end
     -- Check if file exists before trying to delete
-    if vim.loop.fs_stat(exe) then
+    if vim.uv.fs_stat(exe) then
         local success, err = vim.uv.fs_unlink(exe)
         if success then
             vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe, ":t"), vim.log.levels.INFO)
