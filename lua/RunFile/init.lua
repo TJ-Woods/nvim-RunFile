@@ -15,16 +15,16 @@ function M.setup(opts)
         return
     end
 
-    -- Validate terminal_height
-    if opts and opts.terminal_height then
-        local val = opts.terminal_height
+    -- Validate terminal_size
+    if opts and opts.terminal_size then
+        local val = opts.terminal_size
         if type(val) ~= "number" or val <= 0 or val >= 1 then
             vim.notify(
-                "[RunFile] terminal_height must be a number between 0 and 1 (exclusive).",
+                "[RunFile] terminal_size must be a number between 0 and 1 (exclusive).",
                 vim.log.levels.ERROR
             )
             -- Reset invalid value to default so it doesn't break merge
-            opts.terminal_height = 0.25
+            opts.terminal_size = 0.25
         end
     end
     if opts and opts.split then
@@ -59,10 +59,15 @@ local function get_os()
 end
 
 local function run_cmd(cmd, on_finish)
-    -- Create the terminal split
-    local dis_size = math.floor(vim.api.nvim_win_get_height(0) * M.config.terminal_size)
-    vim.cmd("belowright " .. dis_size .. " " .. M.config.split .. " | enew")
+    local cur_win = vim.api.nvim_get_current_win()
 
+    -- Calculate size based on split direction
+    local size = (M.config.split == "vsplit") 
+        and math.floor(vim.api.nvim_win_get_width(cur_win) * M.config.terminal_size)
+        or math.floor(vim.api.nvim_win_get_height(cur_win) * M.config.terminal_size)
+
+    -- Create split
+    vim.cmd("belowright " .. size .. M.config.split .. " | enew")
     local buf = vim.api.nvim_get_current_buf()
 
     -- Set the buffer to 'wipe' so it deletes itself when the window closes
@@ -72,10 +77,12 @@ local function run_cmd(cmd, on_finish)
     vim.fn.termopen(cmd, {
         on_exit = function(_, exit_code, _)
             -- Close the window associated with the buffer
-            if exit_code == 0 and M.config.auto_close then
-                vim.api.nvim_buf_delete(buf, { force = true })
+            if exit_code == 0 and M.config.auto_close and buf_exists then
+                if vim.api.nvim_buf_is_valid(buf) then -- check user hasn't deleted buffer
+                    vim.api.nvim_buf_delete(buf, { force = true })
+                end
             end
-            if on_finish then
+            if on_finish and buf_exists then
                 on_finish(exit_code)
             end
         end
