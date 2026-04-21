@@ -5,6 +5,7 @@ M.config = {
     terminal_size = 0.25,   -- % of current buffer that the terminal window will take up
     split = "split",        -- vsplit| or split--
     cleanup = false,        -- Whether built files are cleaned up (deleted) after running
+    auto_close = false,     -- Whether the terminal buffer will close upon end program
 }
 
 function M.setup(opts)
@@ -57,9 +58,28 @@ local function get_os()
     return vim.uv.os_uname().sysname
 end
 
-local function run_cmd(cmd)
-    local command = vim.api.nvim_replace_termcodes("i" .. cmd .. "<CR>", true, false, true)
-    vim.api.nvim_feedkeys(command, "t", false)
+local function run_cmd(cmd, on_finish)
+    -- Create the terminal split
+    local dis_size = math.floor(vim.api.nvim_win_get_height(0) * M.config.terminal_size)
+    vim.cmd("belowright " .. dis_size .. " " .. M.config.split .. " | enew")
+
+    local buf = vim.api.nvim_get_current_buf()
+
+    -- Start the job in the terminal buffer
+    vim.fn.termopen(cmd, {
+        on_exit = function(_, exit_code, _)
+            -- Close the window associated with the buffer
+            if exit_code == 0 and M.config.auto_close then
+                vim.api.nvim_buf_delete(buf, { force = true })
+            end
+            if on_finish then
+                on_finish(exit_code)
+            end
+        end
+    })
+
+    -- Auto-scroll to bottom
+    vim.cmd("startinsert")
 end
 
 local function get_shell_ext()
@@ -116,51 +136,51 @@ end
 function M.run_file()
     local file_name = vim.api.nvim_buf_get_name(0)
     if file_name == "" then return end
-
     vim.cmd.write()
 
     local os_name = get_os()
     local ext = vim.fn.expand("%:e")
-    local base_path = vim.fn.expand("%:p:r")
+
+    local cmd = ""
+    local exe = get_exe_path(file_name)
 
     -- Logic Mapping
     if ext == "py" then
         local source = find_extra_file(file_name, "source")
-        run_cmd(source and ('"' .. source .. '"') or ((os_name == "Windows_NT") and "python" or "python3" .. ' "' .. file_name .. '"'))
+        cmd = source and ('"' .. source .. '"') or ((os_name == "Windows_NT") and "python" or "python3") .. ' "' .. file_name .. '"'
 
     elseif ext == "js" then
-        run_cmd('node "' .. file_name .. '"')
+        cmd = 'node "' .. file_name .. '"'
 
     elseif ext == "c" or ext == "cpp" then
         local compiler = (ext == "c") and "gcc" or "g++"
         local build_file = find_extra_file(file_name, "build")
 
         if build_file then
-            run_cmd('"' .. build_file .. '"')
+            cmd = '"' .. build_file .. '"'
         else
             local exe = base_path .. (os_name == "Windows_NT" and ".exe" or "")
             -- Only runs the file if compilation is successful
-            run_cmd(compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"')
-            -- Clean up built executable file
-            if M.config.cleanup then
-                M.cleanup()
-            end
+            cmd = compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"'
         end
 
     elseif ext == "ps1" then
-        run_cmd('powershell "' .. file_name .. '"')
+        cmd = 'powershell "' .. file_name .. '"'
 
     elseif vim.tbl_contains({"sh", "bat"}, ext) then
-        run_cmd('"' .. file_name .. '"')
+        cmd = '"' .. file_name .. '"'
 
     else
         vim.notify("Unsupported file type: " .. ext, vim.log.levels.WARN)
         return
     end
 
-    -- Terminal split
-    local dis_size = math.floor(vim.api.nvim_win_get_height(0) * M.config.terminal_size)
-    vim.cmd("belowright " .. dis_size .. " " .. M.config.split .. " | term")
+    -- Execute with a callback for cleanup
+    run_cmd(cmd, function(exit_code)
+        if M.config.cleanup and exe and exit_code == 0 then
+            M.cleanup(exe)
+        end
+    end)
 end
 
 return M
