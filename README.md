@@ -15,8 +15,9 @@ More to come!
 * Limited languages available
 
 # Setup
-This plugin requires 
-``` lua
+This plugin requires
+
+``` Lua
 require("RunFile").setup({})
 ```
 
@@ -24,10 +25,11 @@ require("RunFile").setup({})
 Options are to be placed inside the "{}" when calling .setup().
 
 Options include the following defaults:
-``` lua
+``` Lua
 {
     terminal_size = 0.25,  -- % of current buffer the terminal window will take up
     split = "split",       -- "split" or "vslpit"
-    cleanup = false,       -- whether built files are cleaned up (deleteed) after running
+    cleanup = false,       -- Whether built files are cleaned up (deleteed) after running
+    auto_close = false,    -- Whether the terminal buffer will close upon end program
 }
 ```

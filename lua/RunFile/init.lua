@@ -49,6 +49,17 @@ function M.setup(opts)
             opts.cleanup = false
         end
     end
+    if opts and opts.auto_close ~= nil then
+        local val = opts.auto_close
+        if type(val) ~= "boolean" then
+            vim.notify(
+                "[Runfile] auto_close must be a boolean value.",
+                vim.log.levels.ERROR
+            )
+            -- Reset invalid value to default so it doesn't break merge
+            opts.auto_close = false
+        end
+    end
 
     -- Safely merge valid options
     M.config = vim.tbl_deep_extend("force", M.config, opts or {})
