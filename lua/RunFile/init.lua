@@ -88,12 +88,13 @@ local function run_cmd(cmd, on_finish)
     vim.fn.termopen(cmd, {
         on_exit = function(_, exit_code, _)
             -- Close the window associated with the buffer
+            local buf_exists = vim.api.nvim_buf_is_valid(buf)
             if exit_code == 0 and M.config.auto_close and buf_exists then
-                if vim.api.nvim_buf_is_valid(buf) then -- check user hasn't deleted buffer
+                if buf_exists then -- check user hasn't deleted buffer
                     vim.api.nvim_buf_delete(buf, { force = true })
                 end
             end
-            if on_finish and buf_exists then
+            if on_finish then
                 on_finish(exit_code)
             end
         end
@@ -106,7 +107,7 @@ end
 local function get_shell_ext()
     local os = get_os()
     if os == "Linux" or os == "Darwin" then return ".sh" end
-    return ".bat" -- Default fallback
+    return ".bat"
 end
 
 local function search_dir(dir, target)
@@ -198,6 +199,7 @@ function M.run_file()
     -- Execute with a callback for cleanup
     run_cmd(cmd, function(exit_code)
         if M.config.cleanup and exe and exit_code == 0 then
+            vim.notify("Running Cleanup", vim.log.levels.INFO)
             M.cleanup(exe)
         end
     end)

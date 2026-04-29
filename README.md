@@ -14,6 +14,7 @@ More to come!
 
 # Current Issues
 * Limited languages available
+* Cleanup and auto_close currently not working
 
 # Setup
 This plugin requires
@@ -34,3 +35,6 @@ Options include the following defaults:
     auto_close = false,    -- Whether the terminal buffer will close upon end program
 }
 ```
+
+# Dependancies
+* None!
