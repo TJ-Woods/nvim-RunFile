@@ -73,7 +73,7 @@ local function run_cmd(cmd, on_finish)
     local cur_win = vim.api.nvim_get_current_win()
 
     -- Calculate size based on split direction
-    local size = (M.config.split == "vsplit") 
+    local size = (M.config.split == "vsplit")
         and math.floor(vim.api.nvim_win_get_width(cur_win) * M.config.terminal_size)
         or math.floor(vim.api.nvim_win_get_height(cur_win) * M.config.terminal_size)
 
@@ -87,15 +87,23 @@ local function run_cmd(cmd, on_finish)
     -- Start the job in the terminal buffer
     vim.fn.termopen(cmd, {
         on_exit = function(_, exit_code, _)
-            -- Close the window associated with the buffer
+            print("Exited with code: " .. exit_code)    -- FIX:
+            if on_finish then
+                on_finish(exit_code)
+            end
+            if M.config.auto_close then     -- Attempt to delete the window   FIX:
+                local win = vim.fn.bufwinid(buf)
+                if win ~= -1 then
+                    vim.api.nvim_win_close(win, true)
+                end
+            end
+
             local buf_exists = vim.api.nvim_buf_is_valid(buf)
+            -- Close the window associated with the buffer
             if exit_code == 0 and M.config.auto_close and buf_exists then
                 if buf_exists then -- check user hasn't deleted buffer
                     vim.api.nvim_buf_delete(buf, { force = true })
                 end
-            end
-            if on_finish then
-                on_finish(exit_code)
             end
         end
     })
@@ -198,8 +206,8 @@ function M.run_file()
 
     -- Execute with a callback for cleanup
     run_cmd(cmd, function(exit_code)
-        if M.config.cleanup and exe and exit_code == 0 then
-            vim.notify("Running Cleanup", vim.log.levels.INFO)
+        if M.config.cleanup and exe then -- and exit_code == 0 then  FIX:
+            vim.notify("Running Cleanup" .. exit_code, vim.log.levels.ERROR)
             M.cleanup(exe)
         end
     end)
