@@ -9,6 +9,7 @@ Neovim plugin that runs files in the terminal
 *  Powershell (.ps1)
 *  Batch (.bat)
 *  Shell (.sh)
+
 More to come!
 
 # Current Issues
