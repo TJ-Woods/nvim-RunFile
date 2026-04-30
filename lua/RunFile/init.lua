@@ -15,19 +15,27 @@ function M.setup(opts)
             return
         end
         if type(opts.terminal_size) ~= "number" or opts.terminal_size <= 0 or opts.terminal_size >= 1 then
-            vim.notify("[RunFile] terminal_size must be a number between 0 and 1 (exclusive)", vim.log.levels.ERROR)
+            if type(opts.terminal_size) ~= nil then
+                vim.notify("[RunFile] terminal_size must be a number between 0 and 1 (exclusive)", vim.log.levels.ERROR)
+            end
             opts.terminal_size = 0.25   -- Reset to default
         end
-        if type(opts.split) ~= "string" or (opts.split ~= "split" and opts.split ~= "vsplit" and opts.split ~= "float") then
-            vim.notify("[RunFile] split must be one of 'split', 'vsplit', or 'float'.", vim.log.levels.ERROR)
+        if type(opts.split) ~= "string" or (opts.split ~= "split" and opts.split ~= "vsplit") then
+            if type(opts.split) ~= nil then
+                vim.notify("[RunFile] split must be one of 'split', 'vsplit'.", vim.log.levels.ERROR)
+            end
             opts.split = "split"    -- Reset to default
         end
         if type(opts.cleanup) ~= "boolean" then
-            vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
+            if type(opts.cleanup) ~= nil then
+                vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
+            end
             opts.cleanup = false    -- Reset to default
         end
         if type(opts.auto_close) ~= "boolean" then
-            vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
+            if type(opts.auto_close) ~= nil then
+                vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
+            end
             opts.auto_close = false     -- Reset to default
         end
     end
@@ -73,30 +81,17 @@ local function find_extra_file(file_name, target_name)
     return nil
 end
 
--- Deletes the compiled executable
-function M.cleanup(exe)
-    if not exe or exe == "" then return end
-    if vim.uv.fs_stat(exe) then
-        local success, err = vim.uv.fs_unlink(exe)
-        if success then
-            vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe, ":t"), vim.log.levels.INFO)
-        else
-            vim.notify("Cleanup failed: " .. (err or "unknown error"), vim.log.levels.ERROR)
-        end
-    end
-end
-
--- Handles terminal split creation and command execution
-local function run_cmd(cmd, exe_to_clean)
+-- Handles terminal split creation, command execution, and post-run cleanup
+local function run_cmd(cmd, exe_to_clean, run_config)
     local main_win = vim.api.nvim_get_current_win()
 
     -- Calculate split size based on current window dimensions
-    local size = (M.config.split == "vsplit")
-        and math.floor(vim.api.nvim_win_get_width(main_win) * M.config.terminal_size)
-        or math.floor(vim.api.nvim_win_get_height(main_win) * M.config.terminal_size)
+    local size = (run_config.split == "vsplit")
+        and math.floor(vim.api.nvim_win_get_width(main_win) * run_config.terminal_size)
+        or math.floor(vim.api.nvim_win_get_height(main_win) * run_config.terminal_size)
 
     -- Create terminal split
-    vim.cmd("belowright " .. size .. M.config.split .. " | enew")
+    vim.cmd("belowright " .. size .. run_config.split .. " | enew")
     local term_buf = vim.api.nvim_get_current_buf()
     local term_win = vim.api.nvim_get_current_win()
 
@@ -105,15 +100,15 @@ local function run_cmd(cmd, exe_to_clean)
 
     vim.fn.termopen(cmd, {
         on_exit = function(_, exit_code, _)
-            -- Defer execution slightly to allow UI to finish rendering terminal output
+            -- schedule function to give time for UI to catch up
             vim.schedule(function()
                 -- Auto-close logic: only close if command was successful (exit 0)
-                if exit_code == 0 and M.config.auto_close then
+                if exit_code == 0 and run_config.auto_close then
                     if vim.api.nvim_win_is_valid(term_win) then
                         vim.api.nvim_win_close(term_win, true)
                     end
                 end
-                if M.config.cleanup and exe_to_clean and exit_code == 0 then
+                if run_config.cleanup and exe_to_clean and exit_code == 0 then
                     vim.defer_fn(function()
                         if vim.uv.fs_stat(exe_to_clean) then
                             vim.uv.fs_unlink(exe_to_clean)
@@ -128,11 +123,58 @@ local function run_cmd(cmd, exe_to_clean)
     vim.cmd("startinsert")
 end
 
-function M.run_file()
+local function parse_args(args_str)
+    local overrides = {}
+    -- Split string by spaces, handling potential quotes
+    local args = vim.split(args_str or "", " ", { trimempty = true })
+
+    local i = 1
+    while i <= #args do
+        local arg = args[i]
+        local next_arg = args[i+1]
+
+        if arg == "--terminal-size" then
+            if next_arg and not next_arg:match("^%-%-") then
+                overrides.split = next_arg:gsub('"', ''):gsub("'", "") -- Strip quotes
+                i = i + 1
+            else
+                vim.notify("Unable to determine terminal size from :RunFile --terminal-size <size> where <size> is not given", vim.log.levels.ERROR)
+            end
+
+        elseif arg == "--split" then
+            if next_arg and not next_arg:match("^%-%-") then
+                overrides.split = next_arg:gsub('"', ''):gsub("'", "") -- Strip quotes
+                i = i + 1
+            else
+                overrides.split = "split" -- Default alias for --split
+            end
+        elseif arg == "--cleanup" then
+            overrides.cleanup = true
+        elseif arg == "--no-cleanup" then
+            overrides.cleanup = false
+        elseif arg == "--auto-close" then
+            overrides.auto_close = true
+        elseif arg == "--no-auto-close" then
+            overrides.auto_close = false
+        end
+        i = i + 1
+    end
+    return overrides
+end
+
+
+function M.run_file(opts)
+    -- Get file name
     local file_name = vim.api.nvim_buf_get_name(0)
     if file_name == "" then return end
     vim.cmd.write()
 
+    -- Check for flags
+    local run_config = vim.deepcopy(M.config)
+    local overrides = parse_args(opts.args)
+    run_config = vim.tbl_deep_extend("force", run_config, overrides)
+
+    -- Set variables
     local os_name = get_os()
     local ext = vim.fn.fnamemodify(file_name, ":e")
     local exe = get_exe_path(file_name)
@@ -150,7 +192,6 @@ function M.run_file()
     elseif ext == "c" or ext == "cpp" then
         local compiler = (ext == "c") and "gcc" or "g++"
         local build_file = find_extra_file(file_name, "build")
-
         if build_file then
             cmd = '"' .. build_file .. '"'
         else
@@ -170,7 +211,7 @@ function M.run_file()
     end
 
     -- Run command and handle post-run cleanup
-    run_cmd(cmd, exe)
+    run_cmd(cmd, exe, run_config)
 end
 
 return M
