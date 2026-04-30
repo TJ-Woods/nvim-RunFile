@@ -23,11 +23,11 @@ function M.setup(opts)
     end
     if opts and type(opts.cleanup) ~= "boolean" then
         vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
-        opts.cleanup = false    -- Reset to default
+        opts.cleanup = true    -- Reset to default
     end
     if opts and type(opts.auto_close) ~= "boolean" then
         vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
-        opts.auto_close = false     -- Reset to default
+        opts.auto_close = true     -- Reset to default
     end
 
     -- Safely merge valid options
@@ -85,37 +85,41 @@ function M.cleanup(exe)
 end
 
 -- Handles terminal split creation and command execution
-local function run_cmd(cmd, on_finish)
-    local cur_win = vim.api.nvim_get_current_win()
-    
+local function run_cmd(cmd, exe_to_clean)
+    local main_win = vim.api.nvim_get_current_win()
+
     -- Calculate split size based on current window dimensions
-    local size = (M.config.split == "vsplit") 
-        and math.floor(vim.api.nvim_win_get_width(cur_win) * M.config.terminal_size)
-        or math.floor(vim.api.nvim_win_get_height(cur_win) * M.config.terminal_size)
+    local size = (M.config.split == "vsplit")
+        and math.floor(vim.api.nvim_win_get_width(main_win) * M.config.terminal_size)
+        or math.floor(vim.api.nvim_win_get_height(main_win) * M.config.terminal_size)
 
     -- Create terminal split
     vim.cmd("belowright " .. size .. M.config.split .. " | enew")
-    local buf = vim.api.nvim_get_current_buf()
+    local term_buf = vim.api.nvim_get_current_buf()
+    local term_win = vim.api.nvim_get_current_win()
 
     -- Ensure buffer is wiped when closed to save memory
-    vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
+    vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
 
     vim.fn.termopen(cmd, {
         on_exit = function(_, exit_code, _)
             -- Defer execution slightly to allow UI to finish rendering terminal output
-            vim.defer_fn(function()
+            vim.schedule(function()
                 -- Auto-close logic: only close if command was successful (exit 0)
                 if exit_code == 0 and M.config.auto_close then
-                    local win = vim.fn.bufwinid(buf)
-                    if win and win ~= -1 then
-                        vim.api.nvim_win_close(win, true)
+                    if vim.api.nvim_win_is_valid(term_win) then
+                        vim.api.nvim_win_close(term_win, true)
                     end
                 end
-
-                if on_finish then
-                    on_finish(exit_code)
+                if M.config.cleanup and exe_to_clean and exit_code == 0 then
+                    vim.defer_fn(function()
+                        if vim.uv.fs_stat(exe_to_clean) then
+                            vim.uv.fs_unlink(exe_to_clean)
+                            vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe_to_clean, ":t"))
+                        end
+                    end, 100)
                 end
-            end, 150)
+            end)
         end
     })
 
@@ -164,11 +168,7 @@ function M.run_file()
     end
 
     -- Run command and handle post-run cleanup
-    run_cmd(cmd, function(exit_code)
-        if M.config.cleanup and exe and exit_code == 0 then
-            M.cleanup(exe)
-        end
-    end)
+    run_cmd(cmd, exe)
 end
 
 return M
