@@ -38,6 +38,18 @@ Options include the following defaults:
 ## Dependancies
 * None!
 
+# Usage
+The current file can be run using the command `:RunFile` with arguments to overwrite defaults or custom-set preferences:
+```
+--term-size <size>      Specifies the terminal size. <size> must be between 0 and 1 exclusive
+--split <split>         Specifies the split direction. <split> must be one of "split", "vsplit"
+--split                 Specifies the split direction as "split"
+--vsplit                Specifies the split direction as "vsplit"
+--cleanup               Invokes cleanup (deletes built files)
+--no-cleanup            Disables cleanup (won't delete built files)
+--auto-close            Enables auto_close (terminal buffer closes upon successful execution)
+--no-auto-close         Disables auto_close (terminal buffer remains open upon successful execution)
+```
+
 # Notes
 * This plugin was developed on and for Linux systems. While Windows and Mac _should_ be supported, they have not been tested.
-
