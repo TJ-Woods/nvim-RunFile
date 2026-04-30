@@ -9,7 +9,7 @@ M.config = {
 }
 
 function M.setup(opts)
-    if opts ~= nil then return end
+    if opts == nil then return end
     if type(opts) ~= "table" then
         vim.notify("[RunFile] setup() expects a table", vim.log.levels.ERROR)
         return
