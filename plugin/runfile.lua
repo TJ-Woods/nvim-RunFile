@@ -3,7 +3,7 @@ if vim.g.loaded_runfile then return end
 vim.g.loaded_runfile = 1
 
 -- Command for RunFile
-vim.api.nvim_create_user_command("RunFile", function()
+vim.api.nvim_create_user_command("RunFile", function(opts)
     require("RunFile").run_file(opts)
 end, {
     nargs = "*",
