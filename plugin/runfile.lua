@@ -17,4 +17,4 @@ end, {
 })
 
 -- Default Keymap for RunFile
-vim.keymap.set("n", "<A-r>", ":RunFile<CR>", { silent = true, desc = "Run current file" })
+vim.keymap.set("n", "<A-r>", function() require("RunFile").run_file() end, { silent = true, desc = "Run current file" })

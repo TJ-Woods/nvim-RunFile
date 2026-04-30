@@ -49,7 +49,8 @@ The current file can be run using the command `:RunFile` with arguments to overw
 --no-auto-close         Disables auto_close (terminal buffer remains open upon successful execution)
 ```
 
-The default keybind for this command is \<A-\r>
+The default keybind for this command is \<A-r\>
 
 # Notes
 * This plugin was developed on and for Linux systems. While Windows and Mac _should_ be supported, they have not been tested.
+

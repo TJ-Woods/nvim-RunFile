@@ -17,26 +17,26 @@ function M.setup(opts)
     if opts.terminal_size ~= nil then
         if type(opts.terminal_size) ~= "number" or opts.terminal_size <= 0 or opts.terminal_size >= 1 then
             vim.notify("[RunFile] terminal_size must be a number between 0 and 1 (exclusive)", vim.log.levels.ERROR)
+            opts.terminal_size = 0.25   -- Set to default
         end
-        opts.terminal_size = 0.25   -- Set to default
     end
     if opts.split ~= nil then
         if type(opts.split) ~= "string" or (opts.split ~= "split" and opts.split ~= "vsplit") then
             vim.notify("[RunFile] split must be one of 'split', 'vsplit'.", vim.log.levels.ERROR)
+            opts.split = "split"    -- Set to default
         end
-        opts.split = "split"    -- Set to default
     end
     if opts.cleanup ~= nil then
         if type(opts.cleanup) ~= "boolean" then
             vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
+            opts.cleanup = false    -- Set to default
         end
-        opts.cleanup = false    -- Set to default
     end
     if opts.auto_close ~= nil then
         if type(opts.auto_close) ~= "boolean" then
             vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
+            opts.auto_close = false     -- Set to default
         end
-        opts.auto_close = false     -- Set to default
     end
 
     -- Safely merge valid options
@@ -113,7 +113,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                             vim.uv.fs_unlink(exe_to_clean)
                             vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe_to_clean, ":t"))
                         end
-                    end, 100)
+                    end, 150)
                 end
             end)
         end
@@ -135,16 +135,19 @@ local function parse_args(args_str)
 
         if arg == "--terminal-size" then
             if next_arg and not next_arg:match("^%-%-") then
-                overrides.split = next_arg:gsub('"', ''):gsub("'", "") -- Strip quotes
-                i = i + 1
+                local num = tonumber(next_arg:gsub('"', ''):gsub("'", ""))   -- Strip quotes
+                if num and 0 < num < 1 then overrides.terminal_size = num end
+                i = i + 1   -- Used next word, skip to next
             else
-                vim.notify("Unable to determine terminal size from :RunFile --terminal-size <size> where <size> is not given", vim.log.levels.ERROR)
+                vim.notify("[RunFile] Missing size for --terminal-size", vim.log.levels.ERROR)
             end
-
         elseif arg == "--split" then
             if next_arg and not next_arg:match("^%-%-") then
-                overrides.split = next_arg:gsub('"', ''):gsub("'", "") -- Strip quotes
-                i = i + 1
+                local str = next_arg:gsub('"', ''):gsub("'", "") -- Strip quotes
+                if str and str == "split" or str == "vsplit" then
+                    overrides.split = str
+                end
+                i = i + 1   -- Used next word, skip to next
             else
                 overrides.split = "split" -- Default alias for --split
             end
