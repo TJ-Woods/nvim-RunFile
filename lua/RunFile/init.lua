@@ -9,38 +9,32 @@ M.config = {
 }
 
 function M.setup(opts)
-    if opts == nil then return end
-    if type(opts) ~= "table" then
-        vim.notify("[RunFile] setup() expects a table", vim.log.levels.ERROR)
-        return
-    end
-    if opts.terminal_size ~= nil then
-        if type(opts.terminal_size) ~= "number" or opts.terminal_size <= 0 or opts.terminal_size >= 1 then
-            vim.notify("[RunFile] terminal_size must be a number between 0 and 1 (exclusive)", vim.log.levels.ERROR)
-            opts.terminal_size = 0.25   -- Set to default
-        end
-    end
-    if opts.split ~= nil then
-        if type(opts.split) ~= "string" or (opts.split ~= "split" and opts.split ~= "vsplit") then
-            vim.notify("[RunFile] split must be one of 'split', 'vsplit'.", vim.log.levels.ERROR)
-            opts.split = "split"    -- Set to default
-        end
-    end
-    if opts.cleanup ~= nil then
-        if type(opts.cleanup) ~= "boolean" then
-            vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
-            opts.cleanup = false    -- Set to default
-        end
-    end
-    if opts.auto_close ~= nil then
-        if type(opts.auto_close) ~= "boolean" then
-            vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
-            opts.auto_close = false     -- Set to default
+    if type(opts) ~= "table" then return end
+
+    -- Validate types without overwriting defaults
+    local function validate(key, expected_type)
+        if opts[key] ~= nil and type(opts[key]) ~= expected_type then
+            vim.notify("[RunFile] Invalid type for " .. key, vim.log.levels.WARN)
+            opts[key] = nil -- Clear invalid value so it doesn't overwrite default
         end
     end
 
-    -- Safely merge valid options
-    M.config = vim.tbl_deep_extend("force", M.config, opts or {})
+    validate("terminal_size", "number")
+    validate("split", "string")
+    validate("cleanup", "boolean")
+    validate("auto_close", "boolean")
+
+    -- Range check for size
+    if opts.terminal_size and (opts.terminal_size <= 0 or opts.terminal_size >= 1) then
+        opts.terminal_size = 0.25
+    end
+
+    -- Value check for split
+    if opts.split and opts.split ~= "split" and opts.split ~= "vsplit" then
+        opts.split = "split"
+    end
+
+    M.config = vim.tbl_deep_extend("force", M.config, opts)
 end
 
 local function get_os()
@@ -136,7 +130,7 @@ local function parse_args(args_str)
         if arg == "--terminal-size" then
             if next_arg and not next_arg:match("^%-%-") then
                 local num = tonumber(next_arg:gsub('"', ''):gsub("'", ""))   -- Strip quotes
-                if num and 0 < num and num < 1 then
+                if num and (num <= 0 and num <= 1) then
                     overrides.terminal_size = num
                 end
                 i = i + 1   -- Used next word, skip to next
