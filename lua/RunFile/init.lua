@@ -136,7 +136,9 @@ local function parse_args(args_str)
         if arg == "--terminal-size" then
             if next_arg and not next_arg:match("^%-%-") then
                 local num = tonumber(next_arg:gsub('"', ''):gsub("'", ""))   -- Strip quotes
-                if num and 0 < num < 1 then overrides.terminal_size = num end
+                if num and 0 < num and num < 1 then
+                    overrides.terminal_size = num
+                end
                 i = i + 1   -- Used next word, skip to next
             else
                 vim.notify("[RunFile] Missing size for --terminal-size", vim.log.levels.ERROR)
@@ -144,7 +146,7 @@ local function parse_args(args_str)
         elseif arg == "--split" then
             if next_arg and not next_arg:match("^%-%-") then
                 local str = next_arg:gsub('"', ''):gsub("'", "") -- Strip quotes
-                if str and str == "split" or str == "vsplit" then
+                if str == "split" or str == "vsplit" then
                     overrides.split = str
                 end
                 i = i + 1   -- Used next word, skip to next

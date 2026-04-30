@@ -41,7 +41,7 @@ Options include the following defaults:
 # Usage
 The current file can be run using the command `:RunFile` with arguments to overwrite defaults or custom-set preferences:
 ```
---term-size <size>      Specifies the terminal size. <size> must be between 0 and 1 exclusive
+--terminal-size <size>      Specifies the terminal size. <size> must be between 0 and 1 exclusive
 --split <split>         Specifies the split direction. <split> must be one of "split", "vsplit". Defaults to "split" if not given
 --cleanup               Invokes cleanup (deletes built files)
 --no-cleanup            Disables cleanup (won't delete built files)
