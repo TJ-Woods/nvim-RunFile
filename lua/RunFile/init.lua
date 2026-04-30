@@ -23,11 +23,11 @@ function M.setup(opts)
     end
     if opts and type(opts.cleanup) ~= "boolean" then
         vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
-        opts.cleanup = true    -- Reset to default
+        opts.cleanup = false    -- Reset to default
     end
     if opts and type(opts.auto_close) ~= "boolean" then
         vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
-        opts.auto_close = true     -- Reset to default
+        opts.auto_close = false     -- Reset to default
     end
 
     -- Safely merge valid options

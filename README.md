@@ -13,17 +13,16 @@ Neovim plugin that runs files in the terminal
 More to come!
 
 # Current Issues
-* Limited languages available
-* Cleanup and auto_close currently not working
+* Limited language availability
 
 # Setup
-This plugin requires
+Set up this plugin using:
 
 ``` Lua
 require("RunFile").setup({})
 ```
 
-# Options
+## Options
 Options are to be placed inside the "{}" when calling .setup().
 
 Options include the following defaults:
@@ -36,5 +35,9 @@ Options include the following defaults:
 }
 ```
 
-# Dependancies
+## Dependancies
 * None!
+
+# Notes
+* This plugin was developed on and for Linux systems. While Windows and Mac _should_ be supported, they have not been tested.
+
