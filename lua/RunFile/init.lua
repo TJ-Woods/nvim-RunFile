@@ -9,35 +9,34 @@ M.config = {
 }
 
 function M.setup(opts)
-    if opts ~= nil then
-        if type(opts) ~= "table" then
-            vim.notify("[RunFile] setup() expects a table", vim.log.levels.ERROR)
-            return
-        end
+    if opts ~= nil then return end
+    if type(opts) ~= "table" then
+        vim.notify("[RunFile] setup() expects a table", vim.log.levels.ERROR)
+        return
+    end
+    if opts.terminal_size ~= nil then
         if type(opts.terminal_size) ~= "number" or opts.terminal_size <= 0 or opts.terminal_size >= 1 then
-            if type(opts.terminal_size) ~= nil then
-                vim.notify("[RunFile] terminal_size must be a number between 0 and 1 (exclusive)", vim.log.levels.ERROR)
-            end
-            opts.terminal_size = 0.25   -- Reset to default
+            vim.notify("[RunFile] terminal_size must be a number between 0 and 1 (exclusive)", vim.log.levels.ERROR)
         end
+        opts.terminal_size = 0.25   -- Reset to default
+    end
+    if opts.split ~= nil then
         if type(opts.split) ~= "string" or (opts.split ~= "split" and opts.split ~= "vsplit") then
-            if type(opts.split) ~= nil then
-                vim.notify("[RunFile] split must be one of 'split', 'vsplit'.", vim.log.levels.ERROR)
-            end
-            opts.split = "split"    -- Reset to default
+            vim.notify("[RunFile] split must be one of 'split', 'vsplit'.", vim.log.levels.ERROR)
         end
+        opts.split = "split"    -- Reset to default
+    end
+    if opts.cleanup ~= nil then
         if type(opts.cleanup) ~= "boolean" then
-            if type(opts.cleanup) ~= nil then
-                vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
-            end
-            opts.cleanup = false    -- Reset to default
+            vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
         end
+        opts.cleanup = false    -- Reset to default
+    end
+    if opts.auto_close ~= nil then
         if type(opts.auto_close) ~= "boolean" then
-            if type(opts.auto_close) ~= nil then
-                vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
-            end
-            opts.auto_close = false     -- Reset to default
+            vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
         end
+        opts.auto_close = false     -- Reset to default
     end
 
     -- Safely merge valid options
