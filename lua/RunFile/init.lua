@@ -122,6 +122,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
     vim.cmd("startinsert")
 end
 
+-- Parse flags for :RunFile command
 local function parse_args(args_str)
     local overrides = {}
     -- Split string by spaces, handling potential quotes
@@ -161,7 +162,7 @@ local function parse_args(args_str)
     return overrides
 end
 
-
+-- RunFile Command
 function M.run_file(opts)
     -- Get file name
     local file_name = vim.api.nvim_buf_get_name(0)
@@ -170,8 +171,11 @@ function M.run_file(opts)
 
     -- Check for flags
     local run_config = vim.deepcopy(M.config)
-    local overrides = parse_args(opts.args)
-    run_config = vim.tbl_deep_extend("force", run_config, overrides)
+    local overrides = {}
+    if opts ~= nil then
+        overrides = parse_args(opts.args)
+        run_config = vim.tbl_deep_extend("force", run_config, overrides)
+    end
 
     -- Set variables
     local os_name = get_os()
