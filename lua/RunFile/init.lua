@@ -18,25 +18,25 @@ function M.setup(opts)
         if type(opts.terminal_size) ~= "number" or opts.terminal_size <= 0 or opts.terminal_size >= 1 then
             vim.notify("[RunFile] terminal_size must be a number between 0 and 1 (exclusive)", vim.log.levels.ERROR)
         end
-        opts.terminal_size = 0.25   -- Reset to default
+        opts.terminal_size = 0.25   -- Set to default
     end
     if opts.split ~= nil then
         if type(opts.split) ~= "string" or (opts.split ~= "split" and opts.split ~= "vsplit") then
             vim.notify("[RunFile] split must be one of 'split', 'vsplit'.", vim.log.levels.ERROR)
         end
-        opts.split = "split"    -- Reset to default
+        opts.split = "split"    -- Set to default
     end
     if opts.cleanup ~= nil then
         if type(opts.cleanup) ~= "boolean" then
             vim.notify("[RunFile] cleanup must be a boolean value.", vim.log.levels.ERROR)
         end
-        opts.cleanup = false    -- Reset to default
+        opts.cleanup = false    -- Set to default
     end
     if opts.auto_close ~= nil then
         if type(opts.auto_close) ~= "boolean" then
             vim.notify("[RunFile] auto_close must be a boolean value.", vim.log.levels.ERROR)
         end
-        opts.auto_close = false     -- Reset to default
+        opts.auto_close = false     -- Set to default
     end
 
     -- Safely merge valid options
@@ -171,9 +171,8 @@ function M.run_file(opts)
 
     -- Check for flags
     local run_config = vim.deepcopy(M.config)
-    local overrides = {}
-    if opts ~= nil then
-        overrides = parse_args(opts.args)
+    if opts and opts.args and opts.args ~= "" then
+        local overrides = parse_args(opts.args)
         run_config = vim.tbl_deep_extend("force", run_config, overrides)
     end
 
