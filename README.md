@@ -28,7 +28,7 @@ Options are to be placed inside the "{}" when calling .setup().
 Options include the following defaults:
 ``` Lua
 {
-    terminal_size = 0.25,  -- % of current buffer the terminal window will take up
+    terminal_size = 25,    -- % of current buffer the terminal window will take up
     split = "split",       -- "split" or "vslpit"
     cleanup = false,       -- Whether built files are cleaned up (deleteed) after running
     auto_close = false,    -- Whether the terminal buffer will close upon end program
@@ -40,8 +40,8 @@ Options include the following defaults:
 
 # Usage
 The current file can be run using the command `:RunFile` with arguments to overwrite defaults or custom-set preferences:
-```
---terminal-size <size>      Specifies the terminal size. <size> must be between 0 and 1 exclusive
+```command
+--terminal-size <size>  Specifies the terminal size. <size> must be between 0 and 100 exclusive
 --split <split>         Specifies the split direction. <split> must be one of "split", "vsplit". Defaults to "split" if not given
 --cleanup               Invokes cleanup (deletes built files)
 --no-cleanup            Disables cleanup (won't delete built files)

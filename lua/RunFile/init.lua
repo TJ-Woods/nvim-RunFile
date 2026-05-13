@@ -2,7 +2,7 @@ local M = {}
 
 -- Default configuration
 M.config = {
-    terminal_size = 0.25,   -- % of current window height/width
+    terminal_size = 25,     -- % of current window height/width
     split = "split",        -- vsplit | split
     cleanup = false,        -- Delete built files after run
     auto_close = false,     -- Close terminal window on success
@@ -25,8 +25,8 @@ function M.setup(opts)
     validate("auto_close", "boolean")
 
     -- Range check for size
-    if opts.terminal_size and (opts.terminal_size <= 0 or opts.terminal_size >= 1) then
-        opts.terminal_size = 0.25
+    if opts.terminal_size and (opts.terminal_size <= 0 or opts.terminal_size >= 100) then
+        opts.terminal_size = 25
     end
 
     -- Value check for split
@@ -131,10 +131,10 @@ local function parse_args(args_str)
             if next_arg and not next_arg:match("^%-%-") then
                 local str = next_arg:gsub('"', ''):gsub("'", "")
                 local num = tonumber(str)   -- Strip quotes
-                if num and (num <= 0 and num <= 1) then
+                if num and (num <= 0 and num <= 100) then
                     overrides.terminal_size = num
                 else
-                    vim.notify("[RunFile] Size for --terminal-size must be a number between 0 and 1.", vim.log.levels.ERROR)
+                    vim.notify("[RunFile] Size for --terminal-size must be a number between 0 and 100.", vim.log.levels.ERROR)
                 end
                 i = i + 1   -- Used next word, skip to next
             else
