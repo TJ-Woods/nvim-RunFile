@@ -80,8 +80,8 @@ local function run_cmd(cmd, exe_to_clean, run_config)
 
     -- Calculate split size based on current window dimensions
     local size = (run_config.split == "vsplit")
-        and math.floor(vim.api.nvim_win_get_width(main_win) * run_config.terminal_size)
-        or math.floor(vim.api.nvim_win_get_height(main_win) * run_config.terminal_size)
+        and math.floor(vim.api.nvim_win_get_width(main_win) * (run_config.terminal_size / 100))
+        or math.floor(vim.api.nvim_win_get_height(main_win) * (run_config.terminal_size / 100))
 
     -- Create terminal split
     vim.cmd("belowright " .. size .. run_config.split .. " | enew")
