@@ -131,7 +131,7 @@ local function parse_args(args_str)
             if next_arg and not next_arg:match("^%-%-") then
                 local str = next_arg:gsub('"', ''):gsub("'", "")
                 local num = tonumber(str)   -- Strip quotes
-                if num and (num <= 0 and num <= 100) then
+                if num and (num >= 0 and num <= 100) then
                     overrides.terminal_size = num
                 else
                     vim.notify("[RunFile] Size for --terminal-size must be a number between 0 and 100.", vim.log.levels.ERROR)
