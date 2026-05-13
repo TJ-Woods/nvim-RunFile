@@ -129,9 +129,12 @@ local function parse_args(args_str)
 
         if arg == "--terminal-size" then
             if next_arg and not next_arg:match("^%-%-") then
-                local num = tonumber(next_arg:gsub('"', ''):gsub("'", ""))   -- Strip quotes
+                local str = next_arg:gsub('"', ''):gsub("'", "")
+                local num = tonumber(str)   -- Strip quotes
                 if num and (num <= 0 and num <= 1) then
                     overrides.terminal_size = num
+                else
+                    vim.notify("[RunFile] Size for --terminal-size must be a number between 0 and 1.", vim.log.levels.ERROR)
                 end
                 i = i + 1   -- Used next word, skip to next
             else
