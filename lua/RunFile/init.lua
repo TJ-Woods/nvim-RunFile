@@ -93,8 +93,6 @@ local function run_cmd(cmd, exe_to_clean, run_config)
     local term_buf = vim.api.nvim_get_current_buf()
     local term_win = vim.api.nvim_get_current_win()
 
-    -- Ensure buffer is wiped when closed to avoid memory leak
-    vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
 
     if run_config.true_terminal then
         -- Create a terminal channel inside the target buffer.
@@ -148,6 +146,9 @@ local function run_cmd(cmd, exe_to_clean, run_config)
     else
         print("Not yet implemented")
     end
+
+    -- Ensure buffer is wiped when closed to avoid memory leak
+    vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
 
     vim.cmd("startinsert")
 end
