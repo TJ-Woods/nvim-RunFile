@@ -52,7 +52,7 @@ The current file can be run using the command `:RunFile` with arguments to overw
 --terminal-size <size>  Specifies the terminal size. <size> must be between 0 and 100 exclusive
 --split <split>         Specifies the split direction. <split> must be one of "split", "vsplit". Defaults to "split" if not given
 --cleanup               Invokes cleanup (deletes built files)
---no-cleanup            Disables cleanup (won\'t delete built files)
+--no-cleanup            Disables cleanup (wont delete built files)
 --auto-close            Enables auto_close (terminal buffer closes upon successful execution)
 --no-auto-close         Disables auto_close (terminal buffer remains open upon successful execution)
 --true-terminal         Enables true_terminal
