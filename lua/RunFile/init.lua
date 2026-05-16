@@ -128,7 +128,6 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                 end)
             end,
         })
-
     else
         -- Clean Output Console.
         local chan_id = vim.api.nvim_open_term(term_buf, {})
@@ -169,8 +168,8 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end, 150)
                     end
                 end)
-            end
-        end)
+            end,
+        })
     end
 
     vim.cmd("startinsert")
