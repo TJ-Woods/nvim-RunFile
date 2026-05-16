@@ -155,7 +155,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end
                     else
                         if vim.api.nvim_buf_is_valid(term_buf) then
-                            vim.api.nvim_chan_send(chan_id, string.format("\r\n[Process exited %d] — Press Enter/Esc/Space to close.\r\n", exit_code))
+                            vim.api.nvim_chan_send(chan_id, string.format("\r\n[Process exited %d]\r\n", exit_code))
 
                             -- Drop out of insert mode so they can scroll/look around with h,j,k,l / arrows
                             vim.cmd("stopinsert")
@@ -188,6 +188,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
             end,
         })
     end
+    vim.cmd("startinsert")
 end
 
 -- Parse flags for :RunFile command
