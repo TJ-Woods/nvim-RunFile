@@ -86,7 +86,8 @@ local function run_cmd(cmd, exe_to_clean, run_config)
         or math.floor(vim.api.nvim_win_get_height(main_win) * (run_config.terminal_size / 100))
 
     -- Get buffer type based on run_config setting
-    local buftype = run_config.true_term and "term" or "enew"
+    -- local buftype = run_config.true_term and "term" or "enew"
+    local buftype = "enew"
     -- Create terminal split
     vim.cmd("belowright " .. size .. run_config.split .. " | " .. buftype)
     local term_buf = vim.api.nvim_get_current_buf()
