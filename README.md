@@ -28,12 +28,14 @@ Options are to be placed inside the "{}" when calling .setup().
 Options include the following defaults:
 ``` Lua
 {
-    terminal_size = 25,    -- % of current buffer the terminal window will take up
-    split = "split",       -- "split" or "vslpit"
-    cleanup = false,       -- Whether built files are cleaned up (deleteed) after running
-    auto_close = false,    -- Whether the terminal buffer will close upon end program
+    terminal_size = 25,     -- % of current buffer the terminal window will take up
+    split = "split",        -- "split" or "vslpit"
+    cleanup = false,        -- Whether built files are cleaned up (deleteed) after running
+    auto_close = false,     -- Whether the terminal buffer will close upon end program
+    true_terminal = true,   -- Whether the 'terminal' is a terminal or output console
 }
 ```
+All defaults are configurable.
 
 ## Dependancies
 * None!
@@ -47,6 +49,8 @@ The current file can be run using the command `:RunFile` with arguments to overw
 --no-cleanup            Disables cleanup (won't delete built files)
 --auto-close            Enables auto_close (terminal buffer closes upon successful execution)
 --no-auto-close         Disables auto_close (terminal buffer remains open upon successful execution)
+--true-terminal         Enables true_terminal
+--false-terminal        Disables true_terminal
 ```
 
 The default keybind for this command is \<A-r\>

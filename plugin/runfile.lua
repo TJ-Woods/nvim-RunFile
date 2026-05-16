@@ -8,7 +8,7 @@ vim.api.nvim_create_user_command("RunFile", function(opts)
 end, {
     nargs = "*",
     complete = function(arg_lead)
-        local options = {"--terminal-size", "--split", "--cleanup", "--no-cleanup", "--auto-close", "--no-auto-close"}
+        local options = {"--terminal-size", "--split", "--cleanup", "--no-cleanup", "--auto-close", "--no-auto-close", "--true-terminal", "--false-terminal"}
         -- Filter based on what the user has already typed
         return vim.tbl_filter(function(item)
             return item:find(arg_lead, 1, true)

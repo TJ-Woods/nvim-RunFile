@@ -6,6 +6,7 @@ M.config = {
     split = "split",        -- vsplit | split
     cleanup = false,        -- Delete built files after run
     auto_close = false,     -- Close terminal window on success
+    true_terminal = true,    -- Terminal vs output console after running
 }
 
 function M.setup(opts)
@@ -23,6 +24,7 @@ function M.setup(opts)
     validate("split", "string")
     validate("cleanup", "boolean")
     validate("auto_close", "boolean")
+    validate("true_terminal", "boolean")
 
     -- Range check for size
     if opts.terminal_size and (opts.terminal_size <= 0 or opts.terminal_size >= 100) then
@@ -83,35 +85,68 @@ local function run_cmd(cmd, exe_to_clean, run_config)
         and math.floor(vim.api.nvim_win_get_width(main_win) * (run_config.terminal_size / 100))
         or math.floor(vim.api.nvim_win_get_height(main_win) * (run_config.terminal_size / 100))
 
+    -- Get buffer type based on run_config setting
+    local buftype = run_config.true_term and "term" or "enew"
     -- Create terminal split
-    vim.cmd("belowright " .. size .. run_config.split .. " | enew")
+    vim.cmd("belowright " .. size .. run_config.split .. " | " .. buftype)
     local term_buf = vim.api.nvim_get_current_buf()
     local term_win = vim.api.nvim_get_current_win()
 
-    -- Ensure buffer is wiped when closed to save memory
+    -- Ensure buffer is wiped when closed to avoid memory leak
     vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
 
-    vim.fn.termopen(cmd, {
-        on_exit = function(_, exit_code, _)
-            -- schedule function to give time for UI to catch up
-            vim.schedule(function()
-                -- Auto-close logic: only close if command was successful (exit 0)
-                if exit_code == 0 and run_config.auto_close then
-                    if vim.api.nvim_win_is_valid(term_win) then
-                        vim.api.nvim_win_close(term_win, true)
-                    end
+    if run_config.true_terminal then
+        -- Create a terminal channel inside the target buffer.
+        local chan_id = vim.api.nvim_open_term(term_buf, {})
+
+        vim.fn.jobstart(cmd, {
+            term = true,
+            -- Ensures command output actually renders inside window.
+            stdout_buffered = false,
+            on_stdout = function(_, data)
+                if vim.api.nvim_buf_is_valid(term_buf) then
+                    -- Stream the terminal bytes directly into the buffer channel
+                    vim.api.nvim_chan_send(chan_id, table.concat(data, "\r\n") .. "\r\n")
                 end
-                if run_config.cleanup and exe_to_clean and exit_code == 0 then
-                    vim.defer_fn(function()
-                        if vim.uv.fs_stat(exe_to_clean) then
-                            vim.uv.fs_unlink(exe_to_clean)
-                            vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe_to_clean, ":t"))
+            end,
+            on_stderr = function(_, data)
+                if vim.api.nvim_buf_is_valid(term_buf) then
+                    vim.api.nvim_chan_send(chan_id, table.concat(data, "\r\n") .. "\r\n")
+                end
+            end,
+
+            on_exit = function(_, exit_code, _)
+                -- Schedule function to give time for UI to catch up
+                vim.schedule(function()
+                    -- Auto-close logic: only close if command was successful (exit 0)
+                    if exit_code == 0 and run_config.auto_close then
+                        if vim.api.nvim_win_is_valid(term_win) then
+                            vim.api.nvim_win_close(term_win, true)
                         end
-                    end, 150)
-                end
-            end)
-        end
-    })
+                        -- Delete buffer to avoid memory leak
+                        if vim.api.nvim_buf_is_valid(term_buf) then
+                            vim.api.nvim_buf_delete(term_buf, { force = true })
+                        end
+                    else
+                        -- If auto_close is false OR it failed (exit code != 0), append a status message.
+                        if vim.api.nvim_buf_is_valid(term_buf) then
+                            vim.api.nvim_chan_send(chan_id, string.format("\r\n[Process exited %d]\r\n", exit_code))
+                        end
+                    end
+                    if run_config.cleanup and exe_to_clean and exit_code == 0 then
+                        vim.defer_fn(function()
+                            if vim.uv.fs_stat(exe_to_clean) then
+                                vim.uv.fs_unlink(exe_to_clean)
+                                vim.notify("Cleaned up: " .. vim.fn.fnamemodify(exe_to_clean, ":t"))
+                            end
+                        end, 150)
+                    end
+                end)
+            end
+        })
+    else
+        print("Not yet implemented")
+    end
 
     vim.cmd("startinsert")
 end
@@ -158,6 +193,10 @@ local function parse_args(args_str)
             overrides.auto_close = true
         elseif arg == "--no-auto-close" then
             overrides.auto_close = false
+        elseif arg == "--true-terminal" then
+            overrides.true_terminal = true
+        elseif arg == "--false-terminal" then
+            overrides.true_terminal = false
         end
         i = i + 1
     end
