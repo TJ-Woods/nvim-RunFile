@@ -16,7 +16,7 @@ More to come!
 ----------
 # Current Issues
 * Limited language availability
-* Keyboard input (including keyboard interrupt) not compatible with `:RunFile --false-terminal`
+* Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer
 * No testing for if conflicting flags are given (e.g. `:RunFile --true-terminal --false-terminal`
 
 ----------
