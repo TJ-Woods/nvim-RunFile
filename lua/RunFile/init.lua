@@ -118,11 +118,20 @@ local function run_cmd(cmd, exe_to_clean, run_config)
     vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
 
     if run_config.true_terminal then
-        -- True interactive terminal via raw channel injection
+        -- MODE 1: True interactive terminal via shell spawning flags
         local shell = vim.o.shell
+        local is_windows = get_os() == "Windows NT"
 
-        -- Start a clean terminal running just the shell
-        local job_id = vim.fn.jobstart(shell, {
+        -- Build the execution array depending on the OS shell
+        local full_cmd
+        if is_windows then
+            full_cmd = { shell, "/k", cmd }
+        else
+            full_cmd = { shell, "-c", cmd .. "; " .. shell }
+        end
+
+        -- Start job directly with wrapped command
+        vim.fn.jobstart(full_cmd, {
             term = true,
             on_exit = function(_, exit_code, _)
                 vim.schedule(function()
@@ -143,11 +152,6 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                 end)
             end
         })
-
-        -- Start command execution within the shell
-        if job_id > 0 then
-            vim.api.nvim_chan_send(job_id, cmd .. "\r\n")
-        end
 
     else
         -- Output Console
