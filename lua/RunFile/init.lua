@@ -6,36 +6,60 @@ M.config = {
     split = "split",        -- vsplit | split
     cleanup = false,        -- Delete built files after run
     auto_close = false,     -- Close terminal window on success
-    true_terminal = true,    -- Terminal vs output console after running
+    true_terminal = true,   -- Terminal vs output console after running
 }
 
 function M.setup(opts)
     if type(opts) ~= "table" then return end
 
-    -- Validate types without overwriting defaults
-    local function validate(key, expected_type)
-        if opts[key] ~= nil and type(opts[key]) ~= expected_type then
-            vim.notify("[RunFile] Invalid type for " .. key, vim.log.levels.WARN)
-            opts[key] = nil -- Clear invalid value so it doesn't overwrite default
+    -- Reusable validation function for a configuration block
+    local function validate_config_block(block)
+        if type(block) ~= "table" then return end
+
+        local valid_types = {
+            terminal_size = "number",
+            split = "string",
+            cleanup = "boolean",
+            auto_close = "boolean",
+            true_terminal = "boolean",
+        }
+
+        for key, expected_type in pairs(valid_types) do
+            if block[key] ~= nil then
+                if type(block[key]) ~= expected_type then
+                    vim.notify("[RunFile] Invalid type for " .. key, vim.log.levels.WARN)
+                    block[key] = nil -- Clear invalid value
+                end
+
+                -- Specific range validations
+                if key == "terminal_size" and block.terminal_size then
+                    if block.terminal_size < 0 or block.terminal_size > 100 then
+                        vim.notify("[RunFile] terminal_size must be between 0 and 100", vim.log.levels.WARN)
+                        block.terminal_size = nil
+                    end
+                end
+
+                if key == "split" and block.split then
+                    if block.split ~= "split" and block.split ~= "vsplit" then
+                        vim.notify("[RunFile] split must be 'split' or 'vsplit'", vim.log.levels.WARN)
+                        block.split = nil
+                    end
+                end
+            end
         end
     end
 
-    validate("terminal_size", "number")
-    validate("split", "string")
-    validate("cleanup", "boolean")
-    validate("auto_close", "boolean")
-    validate("true_terminal", "boolean")
+    -- Validate top-level global settings
+    validate_config_block(opts)
 
-    -- Range check for size
-    if opts.terminal_size and (opts.terminal_size <= 0 or opts.terminal_size >= 100) then
-        opts.terminal_size = 25
+    -- Validate nested filetype tables
+    for _, val in pairs(opts) do
+        if type(val) == "table" then
+            validate_config_block(val)
+        end
     end
 
-    -- Value check for split
-    if opts.split and opts.split ~= "split" and opts.split ~= "vsplit" then
-        opts.split = "split"
-    end
-
+    -- Safely merge everything into the master config
     M.config = vim.tbl_deep_extend("force", M.config, opts)
 end
 
@@ -250,16 +274,22 @@ function M.run_file(opts)
     if file_name == "" then return end
     vim.cmd.write()
 
-    -- Check for flags
+    local ext = vim.fn.fnamemodify(file_name, ":e")
+
+    -- Config
     local run_config = vim.deepcopy(M.config)
+    -- Filetype overrides
+    if M.config[ext] and type(M.config[ext]) == "table" then
+        run_config = vim.tbl_deep_extend("force", run_config, M.config[ext])
+    end
+    -- Flag overrides
     if opts and opts.args and opts.args ~= "" then
-        local overrides = parse_args(opts.args)
-        run_config = vim.tbl_deep_extend("force", run_config, overrides)
+        local flag_overrides = parse_args(opts.args)
+        run_config = vim.tbl_deep_extend("force", run_config, flag_overrides)
     end
 
     -- Set variables
     local os_name = get_os()
-    local ext = vim.fn.fnamemodify(file_name, ":e")
     local exe = get_exe_path(file_name)
     local cmd = ""
 
