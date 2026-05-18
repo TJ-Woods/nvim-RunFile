@@ -16,14 +16,15 @@ More to come!
 ----------
 # Current Issues
 * Limited language availability
-* Keyboard interrupts not compatible with `:RunFile --false-terminal`
+* Keyboard input (including keyboard interrupt) not compatible with `:RunFile --false-terminal`
+* No testing for if conflicting flags are given (e.g. `:RunFile --true-terminal --false-terminal`
 
 ----------
 # Setup
 Set up this plugin using:
 
 ``` Lua
-require("RunFile").setup({})
+require("RunFile").setup()
 ```
 
 ## Options
@@ -31,7 +32,7 @@ Options are to be placed inside the "{}" when calling .setup().
 
 Options include the following defaults:
 ``` Lua
-{
+{-- These are the default
     terminal_size = 25,     -- % of current buffer the terminal window will take up
     split = "split",        -- "split" or "vslpit"
     cleanup = false,        -- Delete built executable files after running
@@ -39,6 +40,22 @@ Options include the following defaults:
     true_terminal = true,   -- Use a terminal rather than an output console
 }
 ```
+Additionally, you can add filetype-specific config options.
+``` Lua
+{-- Example only
+    -- Global
+    auto_close = false,
+    true_terminal = false,
+    -- Use the file extension name for configuring options ( e.g. py, c, js )
+    py = {  -- Affects all .py files
+        auto_close = true,
+        true_terminal = true,
+        terminal_size = 30,
+    },
+}
+```
+This allows for global defaults with filetype-specific config. Command flags will override these.
+
 All defaults are configurable.
 Feel free to add suggestions for things you would like to customise!
 
@@ -47,11 +64,12 @@ Feel free to add suggestions for things you would like to customise!
 
 ----------
 # Usage
-The current file can be run using the command `:RunFile` with arguments to overwrite defaults or custom-set preferences:
-```command
+The current file can be run using the command `:RunFile` with flags to overwrite defaults or custom-set preferences:
+``` Cmd
 --terminal-size <size>  Specifies the terminal size. <size> must be between 0 and 100 exclusive
 --split <split>         Specifies the split direction. <split> must be one of "split", "vsplit". Defaults to "split" if not given
---cleanup               Invokes cleanup (deletes built files)
+--vsplit                Specifies the split direction. Alias for `--split vsplit`
+--cleanup               Enables cleanup (deletes built files)
 --no-cleanup            Disables cleanup (wont delete built files)
 --auto-close            Enables auto_close (terminal buffer closes upon successful execution)
 --no-auto-close         Disables auto_close (terminal buffer remains open upon successful execution)
@@ -59,7 +77,7 @@ The current file can be run using the command `:RunFile` with arguments to overw
 --false-terminal        Disables true_terminal
 ```
 
-The default keybind for this command is \<A-r\>
+The default keybind for this command is \<M-r\>
 
 ----------
 # Notes
@@ -68,4 +86,5 @@ The default keybind for this command is \<A-r\>
 ## More to come!
 Here are some things to look forward to:
 * Plans to add more languages to the supported language list
-* Plans to make file-type specific config settings
+* More control on compiled languages building vs running
+* floating terminal option
