@@ -118,23 +118,15 @@ local function run_cmd(cmd, exe_to_clean, run_config)
     vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
 
     if run_config.true_terminal then
-        -- True interactive terminal.
-        -- Run the command inside native system shell so it stays open.
+        -- True interactive terminal via raw channel injection
         local shell = vim.o.shell
-        local flag = (shell:match("cmd") or shell:match("powershell") or shell:match("pwsh")) and "/k" or "-c"
-        -- If it's a Unix shell, chain it with the shell execution so it doesn't close immediately
-        local full_cmd
-        if flag == "-c" then
-            full_cmd = { shell, flag, cmd .. "; " .. shell }
-        else
-            -- Windows cmd.exe /k keeps the terminal prompt open after executing the command
-            full_cmd = { shell, flag, cmd }
-        end
-        vim.fn.jobstart(full_cmd, {
+
+        -- Start a clean terminal running just the shell
+        local job_id = vim.fn.jobstart(shell, {
             term = true,
             on_exit = function(_, exit_code, _)
                 vim.schedule(function()
-                    -- Run your post-run cleanups if successful
+                    -- Standard cleanups if user manually exits terminal
                     if exit_code == 0 and run_config.cleanup and exe_to_clean then
                         vim.defer_fn(function()
                             if vim.uv.fs_stat(exe_to_clean) then
@@ -143,19 +135,24 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                             end
                         end, 150)
                     end
-                    -- Auto-close logic
                     if exit_code == 0 and run_config.auto_close then
                         if vim.api.nvim_win_is_valid(term_win) then
                             vim.api.nvim_win_close(term_win, true)
                         end
                     end
                 end)
-            end,
+            end
         })
+
+        -- Start command execution within the shell
+        if job_id > 0 then
+            vim.api.nvim_chan_send(job_id, cmd .. "\r\n")
+        end
+
     else
         -- Output Console
         vim.fn.jobstart(cmd, {
-            term = true, -- Run in terminal to allow keyboard input
+            term = true,
             on_exit = function(_, exit_code, _)
                 vim.schedule(function()
                     if exit_code == 0 and run_config.auto_close then
@@ -164,10 +161,9 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end
                     else
                         if vim.api.nvim_buf_is_valid(term_buf) then
-                            -- Drop out of terminal/insert mode so they can scroll immediately
                             vim.cmd("stopinsert")
 
-                            -- Setup local keymaps to dismiss the window
+                            -- map exit keys
                             local close_keys = { "<CR>", "<Esc>", "<Space>", "q" }
                             local map_opts = { buffer = term_buf, silent = true, noremap = true }
 
@@ -183,7 +179,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end
                     end
 
-                    -- Run post-run cleanups if successful
+                    -- Run cleanup if successful
                     if run_config.cleanup and exe_to_clean and exit_code == 0 then
                         vim.defer_fn(function()
                             if vim.uv.fs_stat(exe_to_clean) then
@@ -193,9 +189,10 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end, 150)
                     end
                 end)
-            end,
+            end
         })
     end
+
     vim.cmd("startinsert")
 end
 
