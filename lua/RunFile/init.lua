@@ -118,24 +118,18 @@ local function run_cmd(cmd, exe_to_clean, run_config)
     vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
 
     if run_config.true_terminal then
-        -- MODE 1: True interactive terminal via shell spawning flags
+        -- True interactive terminal
         local shell = vim.o.shell
         local is_windows = get_os() == "Windows NT"
 
-        -- Build the execution array depending on the OS shell
-        local full_cmd
-        if is_windows then
-            full_cmd = { shell, "/k", cmd }
-        else
-            full_cmd = { shell, "-c", cmd .. "; " .. shell }
-        end
+        local full_cmd = is_windows 
+            and { shell, "/k", cmd }
+            or { shell, "-c", cmd .. "; " .. shell }
 
-        -- Start job directly with wrapped command
         vim.fn.jobstart(full_cmd, {
             term = true,
             on_exit = function(_, exit_code, _)
                 vim.schedule(function()
-                    -- Standard cleanups if user manually exits terminal
                     if exit_code == 0 and run_config.cleanup and exe_to_clean then
                         vim.defer_fn(function()
                             if vim.uv.fs_stat(exe_to_clean) then
@@ -154,7 +148,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
         })
 
     else
-        -- Output Console
+        -- Output Console with Keyboard Input
         vim.fn.jobstart(cmd, {
             term = true,
             on_exit = function(_, exit_code, _)
@@ -167,7 +161,6 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         if vim.api.nvim_buf_is_valid(term_buf) then
                             vim.cmd("stopinsert")
 
-                            -- map exit keys
                             local close_keys = { "<CR>", "<Esc>", "<Space>", "q" }
                             local map_opts = { buffer = term_buf, silent = true, noremap = true }
 
@@ -183,7 +176,6 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end
                     end
 
-                    -- Run cleanup if successful
                     if run_config.cleanup and exe_to_clean and exit_code == 0 then
                         vim.defer_fn(function()
                             if vim.uv.fs_stat(exe_to_clean) then
@@ -193,7 +185,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end, 150)
                     end
                 end)
-            end
+            end,
         })
     end
 
