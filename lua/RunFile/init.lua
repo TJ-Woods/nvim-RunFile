@@ -153,24 +153,9 @@ local function run_cmd(cmd, exe_to_clean, run_config)
             end,
         })
     else
-        -- Clean Output Console.
-        local chan_id = vim.api.nvim_open_term(term_buf, {})
+        -- Output Console
         vim.fn.jobstart(cmd, {
-            term = false,
-            stdout_buffered = false,
-            on_stdout = function(_, data)
-                if vim.api.nvim_buf_is_valid(term_buf) then
-                    -- Clean up empty lines and translate newlines to terminal carriage returns
-                    local lines = table.concat(data, "\r\n")
-                    vim.api.nvim_chan_send(chan_id, lines)
-                end
-            end,
-            on_stderr = function(_, data)
-                if vim.api.nvim_buf_is_valid(term_buf) then
-                    local lines = table.concat(data, "\r\n")
-                    vim.api.nvim_chan_send(chan_id, lines)
-                end
-            end,
+            term = true, -- Run in terminal to allow keyboard input
             on_exit = function(_, exit_code, _)
                 vim.schedule(function()
                     if exit_code == 0 and run_config.auto_close then
@@ -179,12 +164,10 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end
                     else
                         if vim.api.nvim_buf_is_valid(term_buf) then
-                            vim.api.nvim_chan_send(chan_id, string.format("\r\n[Process exited %d]\r\n", exit_code))
-
-                            -- Drop out of insert mode so they can scroll/look around with h,j,k,l / arrows
+                            -- Drop out of terminal/insert mode so they can scroll immediately
                             vim.cmd("stopinsert")
 
-                            -- Setup local keymaps to easily dismiss the window
+                            -- Setup local keymaps to dismiss the window
                             local close_keys = { "<CR>", "<Esc>", "<Space>", "q" }
                             local map_opts = { buffer = term_buf, silent = true, noremap = true }
 
@@ -200,6 +183,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
                         end
                     end
 
+                    -- Run post-run cleanups if successful
                     if run_config.cleanup and exe_to_clean and exit_code == 0 then
                         vim.defer_fn(function()
                             if vim.uv.fs_stat(exe_to_clean) then
