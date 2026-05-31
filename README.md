@@ -9,7 +9,7 @@ Neovim plugin that runs files in the terminal
 - [x] Powershell (.ps1)
 - [x] Batch (.bat)
 - [x] Shell (.sh)
-- [/] JavaScript (.js) \[limited]
+- [ ] JavaScript (.js) \[limited]
 
 More to come!
 
@@ -17,7 +17,6 @@ More to come!
 # Current Issues
 * Limited language availability
 * Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer
-* No testing for if conflicting flags are given (e.g. `:RunFile --true-terminal --false-terminal`
 
 ----------
 # Setup
@@ -28,7 +27,7 @@ require("RunFile").setup()
 ```
 
 ## Options
-Options are to be placed inside the "{}" when calling .setup().
+Options are to be placed inside the `()` when calling .setup().
 
 Options include the following defaults:
 ``` Lua
@@ -46,7 +45,7 @@ Additionally, you can add filetype-specific config options.
     -- Global
     auto_close = false,
     true_terminal = false,
-    -- Use the file extension name for configuring options ( e.g. py, c, js )
+    -- Use the file extension name for configuring options ( e.g. py, cpp, js )
     py = {  -- Affects all .py files
         auto_close = true,
         true_terminal = true,
@@ -69,15 +68,16 @@ The current file can be run using the command `:RunFile` with flags to overwrite
 --terminal-size <size>  Specifies the terminal size. <size> must be between 0 and 100 exclusive
 --split <split>         Specifies the split direction. <split> must be one of "split", "vsplit". Defaults to "split" if not given
 --vsplit                Specifies the split direction. Alias for `--split vsplit`
---cleanup               Enables cleanup (deletes built files)
+--cleanup <bool>        Enables cleanup (deletes built files). Defaults to `true`
 --no-cleanup            Disables cleanup (wont delete built files)
---auto-close            Enables auto_close (terminal buffer closes upon successful execution)
+--auto-close <bool>     Enables auto_close (terminal buffer closes upon successful execution). Defaults to `true`
 --no-auto-close         Disables auto_close (terminal buffer remains open upon successful execution)
---true-terminal         Enables true_terminal
+--true-terminal <bool>  Enables true_terminal. Defaults to `true`
 --false-terminal        Disables true_terminal
 ```
 
-The default keybind for this command is \<M-r\>
+The values accepted for <bool|true> = "true", "yes", "1"
+The values accepted for <bool|false> = "false", "no", "0"
 
 ----------
 # Notes
