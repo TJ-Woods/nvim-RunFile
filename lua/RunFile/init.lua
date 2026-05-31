@@ -195,52 +195,105 @@ end
 -- Parse flags for :RunFile command
 local function parse_args(args_str)
     local overrides = {}
-    -- Split string by spaces, handling potential quotes
     local args = vim.split(args_str or "", " ", { trimempty = true })
+
+    local seen_flags = {}
+    local conflict_detected = false
+
+    -- User string values into explicit booleans
+    local function to_bool(val)
+        if not val then return nil end
+        val = val:lower():gsub('"', ''):gsub("'", "") -- Clean quotes and casing
+        if val == "true" or val == "yes" or val == "1" then
+            return true
+        elseif val == "false" or val == "no" or val == "0" then
+            return false
+        end
+        return nil
+    end
 
     local i = 1
     while i <= #args do
         local arg = args[i]
-        local next_arg = args[i+1]
 
         if arg == "--terminal-size" then
+            local next_arg = args[i+1]
             if next_arg and not next_arg:match("^%-%-") then
-                local str = next_arg:gsub('"', ''):gsub("'", "")
-                local num = tonumber(str)   -- Strip quotes
-                if num and (num >= 0 and num <= 100) then
+                local num = tonumber(next_arg:gsub('"', ''):gsub("'", ""))
+                if num and num > 0 and num < 100 then
+                    if seen_flags["size"] then conflict_detected = true end
                     overrides.terminal_size = num
-                else
-                    vim.notify("[RunFile] Size for --terminal-size must be a number between 0 and 100.", vim.log.levels.ERROR)
+                    seen_flags["size"] = true
                 end
-                i = i + 1   -- Used next word, skip to next
-            else
-                vim.notify("[RunFile] Missing size for --terminal-size", vim.log.levels.ERROR)
+                i = i + 1
             end
+
         elseif arg == "--split" then
+            local next_arg = args[i+1]
             if next_arg and not next_arg:match("^%-%-") then
-                local str = next_arg:gsub('"', ''):gsub("'", "") -- Strip quotes
-                if str == "split" or str == "vsplit" then
-                    overrides.split = str
+                local val = next_arg:gsub('"', ''):gsub("'", "")
+                if val == "split" or val == "vsplit" then
+                    if seen_flags["split"] then conflict_detected = true end
+                    overrides.split = val
+                    seen_flags["split"] = true
                 end
-                i = i + 1   -- Used next word, skip to next
+                i = i + 1
             else
-                overrides.split = "split" -- Default alias for --split
+                if seen_flags["split"] then conflict_detected = true end
+                overrides.split = "split"
+                seen_flags["split"] = true
             end
-        elseif arg == "--cleanup" then
-            overrides.cleanup = true
-        elseif arg == "--no-cleanup" then
-            overrides.cleanup = false
-        elseif arg == "--auto-close" then
-            overrides.auto_close = true
-        elseif arg == "--no-auto-close" then
-            overrides.auto_close = false
-        elseif arg == "--true-terminal" then
-            overrides.true_terminal = true
-        elseif arg == "--false-terminal" then
-            overrides.true_terminal = false
+
+        elseif arg == "--cleanup" or arg == "--no-cleanup" then
+            if seen_flags["cleanup"] then conflict_detected = true end
+
+            -- Check if the next word is an explicit truth value
+            local next_arg = args[i+1]
+            local bool_val = to_bool(next_arg)
+
+            if bool_val ~= nil and not next_arg:match("^%-%-") then
+                overrides.cleanup = bool_val
+                i = i + 1 -- Skip the next argument since we consumed it
+            else
+                overrides.cleanup = (arg == "--cleanup")
+            end
+            seen_flags["cleanup"] = true
+
+        elseif arg == "--auto-close" or arg == "--no-auto-close" then
+            if seen_flags["auto_close"] then conflict_detected = true end
+
+            local next_arg = args[i+1]
+            local bool_val = to_bool(next_arg)
+
+            if bool_val ~= nil and not next_arg:match("^%-%-") then
+                overrides.auto_close = bool_val
+                i = i + 1
+            else
+                overrides.auto_close = (arg == "--auto-close")
+            end
+            seen_flags["auto_close"] = true
+
+        elseif arg == "--true-terminal" or arg == "--false-terminal" then
+            if seen_flags["true_terminal"] then conflict_detected = true end
+
+            local next_arg = args[i+1]
+            local bool_val = to_bool(next_arg)
+
+            if bool_val ~= nil and not next_arg:match("^%-%-") then
+                overrides.true_terminal = bool_val
+                i = i + 1
+            else
+                overrides.true_terminal = (arg == "--true-terminal")
+            end
+            seen_flags["true_terminal"] = true
         end
         i = i + 1
     end
+
+    if conflict_detected then
+        vim.notify("[RunFile] Conflicting or duplicate flags detected. Using the last values provided.", vim.log.levels.WARN)
+    end
+
     return overrides
 end
 
