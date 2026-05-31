@@ -4,7 +4,7 @@ vim.api.nvim_create_user_command("RunFile", function(opts)
 end, {
     nargs = "*",
     complete = function(arg_lead, cmd_line)
-        local options = { "--terminal-size", "--split", "--cleanup", "--no-cleanup", "--auto-close", "--no-auto-close" }
+        local options = { "--terminal-size", "--split", "--vsplit", "--cleanup", "--no-cleanup", "--auto-close", "--no-auto-close" }
 
         -- Define pairs of flags that cannot exist together
         local conflicts = {
@@ -12,6 +12,8 @@ end, {
             ["--no-cleanup"] = "--cleanup",
             ["--auto-close"] = "--no-auto-close",
             ["--no-auto-close"] = "--auto-close",
+            ["--split"] = "--vsplit",
+            ["--vsplit"] = "--split",
         }
 
         -- Split the current command line by spaces to see what's already typed
