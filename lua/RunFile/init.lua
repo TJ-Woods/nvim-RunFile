@@ -329,6 +329,9 @@ function M.run_file(opts)
         local py_bin = (os_name == "Windows_NT") and "python" or "python3"
         cmd = source and ('"' .. source .. '"') or (py_bin .. ' "' .. file_name .. '"')
 
+    elseif ext == "lua" then
+        cmd = 'lua "' .. file_name .. '"'
+
     elseif ext == "js" then
         cmd = 'node "' .. file_name .. '"'
 

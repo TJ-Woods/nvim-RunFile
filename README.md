@@ -4,6 +4,7 @@ Neovim plugin that runs files in the terminal
 ----------
 # Supported File Types
 - [x] Python (.py) \[option to use source file]
+- [x] Lua (.lua)
 - [x] C (.c) \[option to use build file]
 - [x] C++ (.cpp) \[option to use build file]
 - [x] Powershell (.ps1)
@@ -67,13 +68,13 @@ The current file can be run using the command `:RunFile` with flags to overwrite
 ``` Cmd
 --terminal-size <size>  Specifies the terminal size. <size> must be between 0 and 100 exclusive
 --split <split>         Specifies the split direction. <split> must be one of "split", "vsplit". Defaults to "split" if not given
---vsplit                Specifies the split direction. Alias for `--split vsplit`
+--vsplit                Alias for `--split vsplit`
 --cleanup <bool>        Enables cleanup (deletes built files). Defaults to `true`
---no-cleanup            Disables cleanup (wont delete built files)
+--no-cleanup            Alias for `--cleanup false`
 --auto-close <bool>     Enables auto_close (terminal buffer closes upon successful execution). Defaults to `true`
---no-auto-close         Disables auto_close (terminal buffer remains open upon successful execution)
+--no-auto-close         Alias for `--auto-close false`
 --true-terminal <bool>  Enables true_terminal. Defaults to `true`
---false-terminal        Disables true_terminal
+--false-terminal        Alias for `--true-terminal false`
 ```
 
 The values accepted for <bool|true> = "true", "yes", "1"
@@ -86,5 +87,5 @@ The values accepted for <bool|false> = "false", "no", "0"
 ## More to come!
 Here are some things to look forward to:
 * Plans to add more languages to the supported language list
-* More control on compiled languages building vs running
+* More control on compiled language building and running
 * floating terminal option
