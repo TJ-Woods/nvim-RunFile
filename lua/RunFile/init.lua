@@ -248,12 +248,19 @@ local function parse_args(args_str)
         elseif arg == "--cleanup" or arg == "--no-cleanup" then
             if seen_flags["cleanup"] then conflict_detected = true end
 
-            -- Check if the next word is an explicit truth value
             local next_arg = args[i+1]
-            local bool_val = to_bool(next_arg)
+            local val = next_arg:gsub('"', ""):gsub("'", "")
 
-            if bool_val ~= nil and not next_arg:match("^%-%-") then
-                overrides.cleanup = bool_val
+            -- Check if the next word is an explicit truth value
+            local truthy = nil
+            if (val == "yes" or val == "1" or val == "true") then
+                truthy = true
+            elseif (val == "no" or val == "0" or val == "false") then
+                truthy = false
+            end
+
+            if truthy ~= nil and not next_arg:match("^%-%-") then
+                overrides.cleanup = truthy
                 i = i + 1 -- Skip the next argument since we consumed it
             else
                 overrides.cleanup = (arg == "--cleanup")
@@ -264,10 +271,16 @@ local function parse_args(args_str)
             if seen_flags["auto_close"] then conflict_detected = true end
 
             local next_arg = args[i+1]
-            local bool_val = to_bool(next_arg)
+            local val = next_arg:gsub('"', ""):gsub("'", "")
+            local truthy = nil
+            if (val == "yes" or val == "1" or val == "true") then
+                truthy = true
+            elseif (val == "no" or val == "0" or val == "false") then
+                truthy = false
+            end
 
-            if bool_val ~= nil and not next_arg:match("^%-%-") then
-                overrides.auto_close = bool_val
+            if truthy ~= nil and not next_arg:match("^%-%-") then
+                overrides.auto_close = truthy
                 i = i + 1
             else
                 overrides.auto_close = (arg == "--auto-close")
@@ -278,10 +291,16 @@ local function parse_args(args_str)
             if seen_flags["true_terminal"] then conflict_detected = true end
 
             local next_arg = args[i+1]
-            local bool_val = to_bool(next_arg)
+            local val = next_arg:gsub('"', ""):gsub("'", "")
+            local truthy = nil
+            if (val == "yes" or val == "1" or val == "true") then
+                truthy = true
+            elseif (val == "no" or val == "0" or val == "false") then
+                truthy = false
+            end
 
-            if bool_val ~= nil and not next_arg:match("^%-%-") then
-                overrides.true_terminal = bool_val
+            if truthy ~= nil and not next_arg:match("^%-%-") then
+                overrides.true_terminal = truthy
                 i = i + 1
             else
                 overrides.true_terminal = (arg == "--true-terminal")
