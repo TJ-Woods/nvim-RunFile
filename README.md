@@ -40,7 +40,7 @@ Options include the following defaults:
     true_terminal = true,   -- Use a terminal rather than an output console
 }
 ```
-Additionally, you can add filetype-specific config options.
+Additionally, you can add filetype-specific config options to override the global defaults for certain file types.
 ``` Lua
 {-- Example only
     -- Global
