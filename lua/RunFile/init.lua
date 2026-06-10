@@ -219,7 +219,8 @@ local function parse_args(args_str)
         if arg == "--terminal-size" then
             local next_arg = args[i+1]
             if next_arg and not next_arg:match("^%-%-") then
-                local num = tonumber(next_arg:gsub('"', ''):gsub("'", ""))
+                local numstring = next_arg:gsub('"', ''):gsub("'", "")
+                local num = tonumber(numstring)
                 if num and num > 0 and num < 100 then
                     if seen_flags["size"] then conflict_detected = true end
                     overrides.terminal_size = num
