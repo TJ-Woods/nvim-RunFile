@@ -408,7 +408,7 @@ function M.run_file(opts)
         if build_file and not run_config.force_quick_run then
             cmd = '"' .. build_file .. '"'
         else
-            cmd = compiler .. ' "' .. file_name .. '" -o "' .. exe
+            cmd = compiler .. ' "' .. file_name .. '" -o "' .. exe .. '"'
             -- Chain compilation and execution
             if run_config.run then
                 cmd = cmd .. ' && "' .. exe .. '"'
