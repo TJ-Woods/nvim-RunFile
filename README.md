@@ -20,7 +20,6 @@ More to come!
 * Limited language availability
 * Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer
 * Odin currently only supports single-file packages (Update coming soon)
-* RunFile command flag aliases --no-auto-close and --no-cleanup not working
 
 ----------
 # Setup
