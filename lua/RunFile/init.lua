@@ -271,17 +271,21 @@ local function parse_args(args_str)
             if seen_flags["auto_close"] then conflict_detected = true end
 
             local next_arg = args[i+1]
-            local val = next_arg:gsub('"', ""):gsub("'", "")
-            local truthy = nil
-            if (val == "yes" or val == "1" or val == "true") then
-                truthy = true
-            elseif (val == "no" or val == "0" or val == "false") then
-                truthy = false
-            end
+            if next_arg ~= nil then
+                local val = next_arg:gsub('"', ""):gsub("'", "")
+                local truthy = nil
+                if (val == "yes" or val == "1" or val == "true") then
+                    truthy = true
+                elseif (val == "no" or val == "0" or val == "false") then
+                    truthy = false
+                end
 
-            if truthy ~= nil and not next_arg:match("^%-%-") then
-                overrides.auto_close = truthy
-                i = i + 1
+                if truthy ~= nil and not next_arg:match("^%-%-") then
+                    overrides.auto_close = truthy
+                    i = i + 1
+                else
+                    overrides.auto_close = (arg == "--auto-close")
+                end
             else
                 overrides.auto_close = (arg == "--auto-close")
             end
