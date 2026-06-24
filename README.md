@@ -10,7 +10,7 @@ Neovim plugin that runs files in the terminal
 - [x] Powershell (.ps1)
 - [x] Batch (.bat)
 - [x] Shell (.sh)
-- [ ] Odin (.odin) \[limited]
+- [x] Odin (.odin) \[opption to use build file]
 - [ ] JavaScript (.js) \[limited]
 
 More to come!
@@ -19,7 +19,6 @@ More to come!
 # Current Issues
 * Limited language availability
 * Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer
-* Odin currently only supports single-file packages (Update coming soon)
 
 ----------
 # Setup
@@ -40,6 +39,9 @@ Options include the following defaults:
     cleanup = false,        -- Delete built executable files after running
     auto_close = false,     -- Close the terminal buffer if exit code is 0
     true_terminal = true,   -- Use a terminal rather than an output console
+    run = true,             -- Run the compiled file (Compiled languages only)
+    single_file = false,    -- Compile package from a single file (Odin only)
+    force_quick_run = false, -- (EXPERIMENTAL) Force quick-run rather than running a build file (built languages only)
 }
 ```
 Additionally, you can add filetype-specific config options to override the global defaults for certain file types.
@@ -77,6 +79,10 @@ The current file can be run using the command `:RunFile` with flags to overwrite
 --no-auto-close         Alias for `--auto-close false`
 --true-terminal <bool>  Enables true_terminal. Defaults to `true`
 --false-terminal        Alias for `--true-terminal false`
+--run <bool>            Runs the executable file after compilation. Defaults to `true`
+--no-run                Alias for `--run false`
+--build                 Alias for `--run false`
+--force-quick-run       (EXPERIMENTAL) forces quick run, bypassing build file
 ```
 
 The values accepted for <bool|true> = "true", "yes", "1"
@@ -89,7 +95,5 @@ The values accepted for <bool|false> = "false", "no", "0"
 ## More to come!
 Here are some things to look forward to:
 * More languages to the supported language list
-* More control on compiled language building and running
 * Use of compiler flags for compiled languages
-* "Normal" directory-based packages for Odin (currently only supports single-file packages)
 * Floating terminal option

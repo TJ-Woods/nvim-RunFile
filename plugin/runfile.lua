@@ -1,6 +1,7 @@
+M = require("RunFile")
 -- Command for RunFile
 vim.api.nvim_create_user_command("RunFile", function(opts)
-    require("RunFile").run_file(opts)
+    M.run_file(opts)
 end, {
     nargs = "*",
     complete = function(arg_lead, cmd_line)
@@ -17,6 +18,28 @@ end, {
             ["--true-terminal"] = "--false-terminal",
             ["--false-terminal"] = "--true-terminal",
         }
+
+        local ft = M.get_filetype()
+        if ft == "odin" then
+            table.insert(options, "--file")  -- Single-file package for Odin language
+            table.insert(options, "--run")    -- Allow run
+            table.insert(options, "--force-quick-run") -- Force quick-run
+        elseif ft == "c" or ft == "cpp" then
+            table.insert(options, "--run")    -- Allow run
+            table.insert(options, "--force-quick-run") -- Force quick-run
+        end
+
+        if M.t_has(options, "--run") then
+            table.insert(options, "--no-run")  -- Alias for --run false
+            table.insert(options, "--build")   -- Alias for --run false
+
+            conflicts["--run"] = "--no-run"
+            conflicts["--run"] = "--build"
+            conflicts["--no-run"] = "--run"
+            conflicts["--no-run"] = "--build"
+            conflicts["--build"] = "--run"
+            conflicts["--build"] = "--no-run"
+        end
 
         -- Split the current command line by spaces to see what's already typed
         local current_args = vim.split(cmd_line or "", "%s+", { trimempty = true })

@@ -1,5 +1,25 @@
 local M = {}
 
+function M.t_has(table, value)
+    for i = 1, #table do
+        if table[i] == value then
+            return true
+        end
+    end
+    return false
+end
+
+function M.get_filetype()
+    -- Get full path
+    local file_name = vim.api.nvim_buf_get_name(0)
+    if file_name == "" then return end
+    vim.cmd.write() -- Save file
+
+    -- Get filetype extension
+    local ext = vim.fn.fnamemodify(file_name, ":e")
+    return ext
+end
+
 -- Default configuration
 M.config = {
     terminal_size = 25,     -- % of current window height/width
@@ -7,12 +27,14 @@ M.config = {
     cleanup = false,        -- Delete built files after run
     auto_close = false,     -- Close terminal window on success
     true_terminal = true,   -- Terminal vs output console after running
+    run = true,             -- Run compiled file (compiled languages only)
+    single_file = true,     -- Compile package from a single file (Odin only)
+    force_quick_run = false,-- Force compiled languages to use a quick-run rather than running with a build-file (experimental)
 }
 
 function M.setup(opts)
     if type(opts) ~= "table" then return end
 
-    -- Reusable validation function for a configuration block
     local function validate_config_block(block)
         if type(block) ~= "table" then return end
 
@@ -22,6 +44,9 @@ function M.setup(opts)
             cleanup = "boolean",
             auto_close = "boolean",
             true_terminal = "boolean",
+            run = "boolean",
+            single_file = "boolean",
+            force_quick_run = "boolean",
         }
 
         for key, expected_type in pairs(valid_types) do
@@ -34,7 +59,7 @@ function M.setup(opts)
                 -- Specific range validations
                 if key == "terminal_size" and block.terminal_size then
                     if block.terminal_size < 0 or block.terminal_size > 100 then
-                        vim.notify("[RunFile] terminal_size must be between 0 and 100", vim.log.levels.WARN)
+                        vim.notify("[RunFile] terminal_size must be between 0 and 100 (exclusive)", vim.log.levels.WARN)
                         block.terminal_size = nil
                     end
                 end
@@ -85,15 +110,20 @@ local function get_exe_path(file_path)
     return nil
 end
 
+-- Search the current directory for a specific file "target"
 local function search_dir(dir, target)
     local stat = vim.uv.fs_stat(dir .. target)
     return stat ~= nil
 end
 
--- Looks for source.sh/bat or build.sh/bat in the same directory
-local function find_extra_file(file_name, target_name)
-    local dir = vim.fn.fnamemodify(file_name, ":p:h") .. "/"
-    local target = target_name .. get_shell_ext()
+-- Returns the directory the file is in
+local function get_dir(file_name)
+    return vim.fn.fnamemodify(file_name, ":p:h") .. "/"
+end
+
+-- Looks for files in the current directory
+local function find_extra_file(file_name, target)
+    local dir = get_dir(file_name)
     if search_dir(dir, target) then
         return dir .. target
     end
@@ -200,18 +230,6 @@ local function parse_args(args_str)
     local seen_flags = {}
     local conflict_detected = false
 
-    -- User string values into explicit booleans
-    local function to_bool(val)
-        if not val then return nil end
-        val = val:lower():gsub('"', ''):gsub("'", "") -- Clean quotes and casing
-        if val == "true" or val == "yes" or val == "1" then
-            return true
-        elseif val == "false" or val == "no" or val == "0" then
-            return false
-        end
-        return nil
-    end
-
     local i = 1
     while i <= #args do
         local arg = args[i]
@@ -224,10 +242,10 @@ local function parse_args(args_str)
                 if num and num > 0 and num < 100 then
                     if seen_flags["size"] then conflict_detected = true end
                     overrides.terminal_size = num
-                    seen_flags["size"] = true
                 end
                 i = i + 1
             end
+            seen_flags["size"] = true
 
         elseif arg == "--split" then
             local next_arg = args[i+1]
@@ -236,32 +254,35 @@ local function parse_args(args_str)
                 if val == "split" or val == "vsplit" then
                     if seen_flags["split"] then conflict_detected = true end
                     overrides.split = val
-                    seen_flags["split"] = true
                 end
                 i = i + 1
             else
                 if seen_flags["split"] then conflict_detected = true end
                 overrides.split = "split"
-                seen_flags["split"] = true
             end
+            seen_flags["split"] = true
 
         elseif arg == "--cleanup" or arg == "--no-cleanup" then
             if seen_flags["cleanup"] then conflict_detected = true end
 
             local next_arg = args[i+1]
-            local val = next_arg:gsub('"', ""):gsub("'", "")
+            if next_arg ~= nil then
+                local val = next_arg:gsub('"', ""):gsub("'", "")
 
-            -- Check if the next word is an explicit truth value
-            local truthy = nil
-            if (val == "yes" or val == "1" or val == "true") then
-                truthy = true
-            elseif (val == "no" or val == "0" or val == "false") then
-                truthy = false
-            end
+                -- Check if the next word is an explicit truth value
+                local truthy = nil
+                if (val == "yes" or val == "1" or val == "true") then
+                    truthy = true
+                elseif (val == "no" or val == "0" or val == "false") then
+                    truthy = false
+                end
 
-            if truthy ~= nil and not next_arg:match("^%-%-") then
-                overrides.cleanup = truthy
-                i = i + 1 -- Skip the next argument since we consumed it
+                if truthy ~= nil and not next_arg:match("^%-%-") then
+                    overrides.cleanup = truthy
+                    i = i + 1 -- Skip the next argument since we consumed it
+                else
+                    overrides.cleanup = (arg == "--cleanup")
+                end
             else
                 overrides.cleanup = (arg == "--cleanup")
             end
@@ -310,6 +331,28 @@ local function parse_args(args_str)
                 overrides.true_terminal = (arg == "--true-terminal")
             end
             seen_flags["true_terminal"] = true
+
+        elseif arg == "--run" or arg == "--no-run" or arg == "--build" then
+            if seen_flags["run"] then conflict_detected = true end
+            local next_arg = args[i+1]
+            if next_arg ~= nil then
+                val = next_arg:gsub('"', ""):gsub("'", "")
+                local truthy = nil
+                if (val == "yes" or val == "1" or val == "true") then
+                    truthy = true
+                elseif (val == "no" or val == "0" or val == "false") then
+                    truthy = false
+                end
+                if truthy ~= nil and not next_arg:match("^$-$-") then
+                    overrides.run = truthy
+                    i = i + 1
+                else
+                    overrides.run = (arg == "--run")
+                end
+            else
+                overrides.run = (arg == "--run")
+            end
+            seen_flags["run"] = true
         end
         i = i + 1
     end
@@ -349,7 +392,7 @@ function M.run_file(opts)
 
     -- Language-specific command generation
     if ext == "py" then
-        local source = find_extra_file(file_name, "source")
+        local source = find_extra_file(file_name, "source" .. get_shell_ext())
         local py_bin = (os_name == "Windows_NT") and "python" or "python3"
         cmd = source and ('"' .. source .. '"') or (py_bin .. ' "' .. file_name .. '"')
 
@@ -361,20 +404,44 @@ function M.run_file(opts)
 
     elseif ext == "c" or ext == "cpp" then
         local compiler = (ext == "c") and "gcc" or "g++"
-        local build_file = find_extra_file(file_name, "build")
-        if build_file then
+        local build_file = find_extra_file(file_name, "build" .. get_shell_ext())
+        if build_file and not run_config.force_quick_run then
             cmd = '"' .. build_file .. '"'
         else
-            -- Chain compilation and execution; only runs if compilation succeeds
-            cmd = compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"'
+            cmd = compiler .. ' "' .. file_name .. '" -o "' .. exe
+            -- Chain compilation and execution
+            if run_config.run then
+                cmd = cmd .. ' && "' .. exe .. '"'
+            end
         end
-        -- TODO: Update to allow explicit build only
         -- TODO: Update to allow compiler flags
+
     elseif ext == "odin" then
-        cmd = 'odin run "' .. file_name .. '" -file'  -- Runs as a single-file package ONLY
-        -- TODO: Update to allow for multi-file build and run
-        -- using directory instead of file_name
-        -- cmd = 'odin run "' .. file_path .. '"' -- Normal build + run
+        local build_file = find_extra_file(file_name, "build" .. get_shell_ext())
+        if build_file and not run_config.force_quick_run then
+            cmd = '"' .. build_file .. '"'
+        else
+            local action = "run"
+            local dir = get_dir(file_name)
+            local flags = {}
+            if not run_config.run then
+                action = "build"
+            end
+            if run_config.single_file then
+                table.insert(flags, "-file")
+                dir = file_name
+            end
+            if not run_config.cleanup and run_config.run then
+                table.insert(flags, "-keep-executable")
+            end
+
+            cmd = 'odin ' .. action .. ' "' .. dir .. '"'
+            for i = 1, #flags do
+                if flags[i] then -- Tests for #flags == 0
+                    cmd = cmd .. " ".. flags[i]
+                end
+            end
+        end
 
     elseif ext == "ps1" then
         cmd = 'powershell "' .. file_name .. '"'
