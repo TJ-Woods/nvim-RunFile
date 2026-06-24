@@ -319,10 +319,10 @@ end
 
 -- RunFile Command
 function M.run_file(opts)
-    -- Get file name
+    -- Get full path
     local file_name = vim.api.nvim_buf_get_name(0)
     if file_name == "" then return end
-    vim.cmd.write()
+    vim.cmd.write() -- Save file
 
     local ext = vim.fn.fnamemodify(file_name, ":e")
 
@@ -364,6 +364,13 @@ function M.run_file(opts)
             -- Chain compilation and execution; only runs if compilation succeeds
             cmd = compiler .. ' "' .. file_name .. '" -o "' .. exe .. '" && "' .. exe .. '"'
         end
+        -- TODO: Update to allow explicit build only
+        -- TODO: Update to allow compiler flags
+    elseif ext == "odin" then
+        cmd = 'odin run "' .. file_name .. '" -file'  -- Runs as a single-file package ONLY
+        -- TODO: Update to allow for multi-file build and run
+        -- using directory instead of file_name
+        -- cmd = 'odin run "' .. file_path .. '"' -- Normal build + run
 
     elseif ext == "ps1" then
         cmd = 'powershell "' .. file_name .. '"'

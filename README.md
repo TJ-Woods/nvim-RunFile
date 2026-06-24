@@ -10,6 +10,7 @@ Neovim plugin that runs files in the terminal
 - [x] Powershell (.ps1)
 - [x] Batch (.bat)
 - [x] Shell (.sh)
+- [ ] Odin (.odin) \[limited]
 - [ ] JavaScript (.js) \[limited]
 
 More to come!
@@ -18,6 +19,8 @@ More to come!
 # Current Issues
 * Limited language availability
 * Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer
+* Odin currently only supports single-file packages (Update coming soon)
+* RunFile command flag aliases --no-auto-close and --no-cleanup not working
 
 ----------
 # Setup
@@ -57,10 +60,10 @@ Additionally, you can add filetype-specific config options to override the globa
 This allows for global defaults with filetype-specific config. Command flags will override these.
 
 All defaults are configurable.
-Feel free to add suggestions for things you would like to customise!
+Feel free to suggest things you would like to customise!
 
 ## Dependancies
-* None!
+* Requires only the language compilers/binaries for the languages you are running
 
 ----------
 # Usage
@@ -86,6 +89,8 @@ The values accepted for <bool|false> = "false", "no", "0"
 
 ## More to come!
 Here are some things to look forward to:
-* Plans to add more languages to the supported language list
+* More languages to the supported language list
 * More control on compiled language building and running
-* floating terminal option
+* Use of compiler flags for compiled languages
+* "Normal" directory-based packages for Odin (currently only supports single-file packages)
+* Floating terminal option
