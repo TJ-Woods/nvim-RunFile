@@ -353,6 +353,10 @@ local function parse_args(args_str)
                 overrides.run = (arg == "--run")
             end
             seen_flags["run"] = true
+        elseif arg == "--force-quick-run" then
+            if seen_flags["force_quick_run"] then conflict_detected = true end
+            overrides.force_quick_run = true
+            seen_flags["force_quick_run"] = true
         end
         i = i + 1
     end
