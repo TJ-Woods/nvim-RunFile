@@ -10,7 +10,7 @@ Neovim plugin that runs files in the terminal
 - [x] Powershell (.ps1)
 - [x] Batch (.bat)
 - [x] Shell (.sh)
-- [x] Odin (.odin) \[opption to use build file]
+- [x] Odin (.odin) \[option to use build file]
 - [ ] JavaScript (.js) \[limited]
 
 More to come!
@@ -95,5 +95,6 @@ The values accepted for <bool|false> = "false", "no", "0"
 ## More to come!
 Here are some things to look forward to:
 * More languages to the supported language list
+* Makefile support
 * Use of compiler flags for compiled languages
 * Floating terminal option
