@@ -133,7 +133,7 @@ end
 -- Handles terminal split creation, command execution, and post-run cleanup
 local function run_cmd(cmd, exe_to_clean, run_config)
     local main_win = vim.api.nvim_get_current_win()
-    local term_buf = vim.api.nvim_get_current_buf(false, true)
+    local term_buf = vim.api.nvim_create_buf(false, true)
     local term_win
 
     if run_config.split == "float" then
@@ -160,6 +160,7 @@ local function run_cmd(cmd, exe_to_clean, run_config)
             title_pos = "center",
         }
         term_win = vim.api.nvim_open_win(term_buf, true, float_opts)
+
     elseif run_config.split == "split" or run_config.split == "vsplit" then
         -- Calculate split size based on current window dimensions
         local size = (run_config.split == "vsplit")
