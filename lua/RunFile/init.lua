@@ -23,7 +23,7 @@ end
 -- Default configuration
 M.config = {
     terminal_size = 25,     -- % of current window height/width
-    split = "split",        -- vsplit | split
+    split = "split",        -- vsplit | split | float
     cleanup = false,        -- Delete built files after run
     auto_close = false,     -- Close terminal window on success
     true_terminal = true,   -- Terminal vs output console after running
@@ -65,8 +65,8 @@ function M.setup(opts)
                 end
 
                 if key == "split" and block.split then
-                    if block.split ~= "split" and block.split ~= "vsplit" then
-                        vim.notify("[RunFile] split must be 'split' or 'vsplit'", vim.log.levels.WARN)
+                    if block.split ~= "split" and block.split ~= "vsplit" and block.split ~= "float" then
+                        vim.notify("[RunFile] split must be 'split' or 'vsplit' or 'float'", vim.log.levels.WARN)
                         block.split = nil
                     end
                 end
@@ -74,10 +74,10 @@ function M.setup(opts)
         end
     end
 
-    -- Validate top-level global settings
+    -- Validate global config
     validate_config_block(opts)
 
-    -- Validate nested filetype tables
+    -- Validate filetype config
     for _, val in pairs(opts) do
         if type(val) == "table" then
             validate_config_block(val)
@@ -133,16 +133,44 @@ end
 -- Handles terminal split creation, command execution, and post-run cleanup
 local function run_cmd(cmd, exe_to_clean, run_config)
     local main_win = vim.api.nvim_get_current_win()
+    local term_buf = vim.api.nvim_get_current_buf(false, true)
+    local term_win
 
-    -- Calculate split size based on current window dimensions
-    local size = (run_config.split == "vsplit")
+    if run_config.split == "float" then
+        local screen_w = vim.o.columns
+        local screen_h = vim.o.lines
+        local scale = run_config.terminal_size / 100
+        local win_w = math.floor(screen_w * scale)
+        local win_h = math.floor(screen_h * scale)
+
+        -- Center coordinates
+        local row = math.floor((screen_h - win_h) / 2)
+        local col = math.floor((screen_w - win_w) / 2)
+
+        local float_opts = {
+            relative = "editor",
+            row = row,
+            col = col,
+            width = win_w,
+            height = win_h,
+            focusable = true,
+            style = "minimal",
+            border = "single",
+            title = " RunFile Terminal ",
+            title_pos = "center",
+        }
+        term_win = vim.api.nvim_open_win(term_buf, true, float_opts)
+    elseif run_config.split == "split" or run_config.split == "vsplit" then
+        -- Calculate split size based on current window dimensions
+        local size = (run_config.split == "vsplit")
         and math.floor(vim.api.nvim_win_get_width(main_win) * (run_config.terminal_size / 100))
         or math.floor(vim.api.nvim_win_get_height(main_win) * (run_config.terminal_size / 100))
 
-    -- Create a clean split window
-    vim.cmd("belowright " .. size .. run_config.split .. " | enew")
-    local term_buf = vim.api.nvim_get_current_buf()
-    local term_win = vim.api.nvim_get_current_win()
+        -- Create a clean split window
+        vim.cmd("belowright " .. size .. run_config.split .. " | enew")
+        term_buf = vim.api.nvim_get_current_buf()
+        term_win = vim.api.nvim_get_current_win()
+    end
 
     -- Ensure buffer is wiped when closed to avoid memory leak
     vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = term_buf })
