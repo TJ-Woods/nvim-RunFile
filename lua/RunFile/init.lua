@@ -157,7 +157,6 @@ local function run_cmd(cmd, exe_to_clean, run_config)
             style = "minimal",
             border = "single",
             title = " RunFile Terminal ",
-            title_pos = "center",
         }
         term_win = vim.api.nvim_open_win(term_buf, true, float_opts)
 
