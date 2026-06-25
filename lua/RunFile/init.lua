@@ -280,7 +280,7 @@ local function parse_args(args_str)
             local next_arg = args[i+1]
             if next_arg and not next_arg:match("^%-%-") then
                 local val = next_arg:gsub('"', ''):gsub("'", "")
-                if val == "split" or val == "vsplit" then
+                if val == "split" or val == "vsplit" or val == "float" then
                     if seen_flags["split"] then conflict_detected = true end
                     overrides.split = val
                 end
