@@ -5,7 +5,7 @@ vim.api.nvim_create_user_command("RunFile", function(opts)
 end, {
     nargs = "*",
     complete = function(arg_lead, cmd_line)
-        local options = { "--terminal-size", "--split", "--vsplit", "--cleanup", "--no-cleanup", "--auto-close", "--no-auto-close", "--true-terminal", "--false-terminal" }
+        local options = { "--terminal-size", "--split", "--vsplit", "--float", "--cleanup", "--no-cleanup", "--auto-close", "--no-auto-close", "--true-terminal", "--false-terminal" }
 
         -- Define pairs of flags that cannot exist together
         local conflicts = {
@@ -14,7 +14,11 @@ end, {
             ["--auto-close"] = "--no-auto-close",
             ["--no-auto-close"] = "--auto-close",
             ["--split"] = "--vsplit",
+            ["--split"] = "--float",
             ["--vsplit"] = "--split",
+            ["--vsplit"] = "--float",
+            ["--float"] = "--split",
+            ["--float"] = "--vsplit",
             ["--true-terminal"] = "--false-terminal",
             ["--false-terminal"] = "--true-terminal",
         }

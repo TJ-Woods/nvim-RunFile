@@ -35,7 +35,7 @@ Options include the following defaults:
 ``` Lua
 {-- These are the default
     terminal_size = 25,     -- % of current buffer the terminal window will take up
-    split = "split",        -- "split" or "vslpit"
+    split = "split",        -- "split" or "vslpit" or "float"
     cleanup = false,        -- Delete built executable files after running
     auto_close = false,     -- Close the terminal buffer if exit code is 0
     true_terminal = true,   -- Use a terminal rather than an output console
@@ -55,6 +55,7 @@ Additionally, you can add filetype-specific config options to override the globa
         auto_close = true,
         true_terminal = true,
         terminal_size = 30,
+        split = "float"
     },
 }
 ```
@@ -71,8 +72,9 @@ Feel free to suggest things you would like to customise!
 The current file can be run using the command `:RunFile` with flags to overwrite defaults or custom-set preferences:
 ``` Cmd
 --terminal-size <size>  Specifies the terminal size. <size> must be between 0 and 100 exclusive
---split <split>         Specifies the split direction. <split> must be one of "split", "vsplit". Defaults to "split" if not given
+--split <split>         Specifies the split direction. <split> must be one of "split", "vsplit", "float". Defaults to `split`
 --vsplit                Alias for `--split vsplit`
+--float                 Alias for `--split float`
 --cleanup <bool>        Enables cleanup (deletes built files). Defaults to `true`
 --no-cleanup            Alias for `--cleanup false`
 --auto-close <bool>     Enables auto_close (terminal buffer closes upon successful execution). Defaults to `true`
@@ -97,4 +99,3 @@ Here are some things to look forward to:
 * More languages to the supported language list
 * Makefile support
 * Use of compiler flags for compiled languages
-* Floating terminal option
