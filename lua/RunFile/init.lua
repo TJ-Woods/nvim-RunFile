@@ -275,7 +275,7 @@ local function parse_args(args_str)
             end
             seen_flags["size"] = true
 
-        elseif arg == "--split" then
+        elseif arg == "--split" or arg == "--vsplit" or arg == "--float" then
             local next_arg = args[i+1]
             if next_arg and not next_arg:match("^%-%-") then
                 local val = next_arg:gsub('"', ''):gsub("'", "")
@@ -286,7 +286,13 @@ local function parse_args(args_str)
                 i = i + 1
             else
                 if seen_flags["split"] then conflict_detected = true end
-                overrides.split = "split"
+                if arg == "--split" then
+                    overrides.split = "split"
+                elseif arg == "--vsplit" then
+                    overrides.split = "vsplit"
+                elseif arg == "--float" then
+                    overrides.split = "float"
+                end
             end
             seen_flags["split"] = true
 
