@@ -49,7 +49,7 @@ end, {
             excluded[arg] = true
             -- If that flag has a known conflict, exclude the conflicting twin too
             if conflicts[arg] then
-                for _, confl_arg in ipairs(current_args[arg]) do
+                for _, confl_arg in ipairs(conflicts[arg]) do
                     excluded[confl_arg] = true
                 end
             end
