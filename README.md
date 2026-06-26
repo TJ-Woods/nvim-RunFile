@@ -17,8 +17,9 @@ More to come!
 
 ----------
 # Current Issues
-* Limited language availability
-* Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer
+* Limited language availability.
+* Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer.
+* Only the file of the current buffer can be run.
 
 ----------
 # Setup
@@ -70,7 +71,7 @@ Feel free to suggest things you would like to customise!
 ----------
 # Usage
 The current file can be run using the command `:RunFile` with flags to overwrite defaults or custom-set preferences:
-``` Cmd
+```
 --terminal-size <size>  Specifies the terminal size. <size> must be between 0 and 100 exclusive
 --split <split>         Specifies the split direction. <split> must be one of "split", "vsplit", "float". Defaults to `split`
 --vsplit                Alias for `--split vsplit`
@@ -90,6 +91,24 @@ The current file can be run using the command `:RunFile` with flags to overwrite
 The values accepted for <bool|true> = "true", "yes", "1"
 The values accepted for <bool|false> = "false", "no", "0"
 
+It may be useful to bind this command to a keybind, similar to other IDEs. This can be done very easily.
+For example,
+``` Lua
+vim.keybind.set("n", "<leader>r", "<CMD>RunFle<CR>", { desc = "{(r)un} Run the current file using RunFile" })
+```
+You can even set keybinds for commonly used deviations from the global or filetype configuration RunFile commands
+using the command flags above.
+
+``` Lua
+vim.keybind.set(
+    "n",
+    "<leader>ro",
+    "<CDM>RunFile --no-auto-close<CR>",
+    { desc = "{(r)un and keep (o)pen} Run the current file without closing the output buffer using RunFile" }
+)
+```
+
+
 ----------
 # Notes
 * This plugin was developed on and for Linux systems. While Windows and Mac _should_ be supported, they have not been tested.
@@ -99,3 +118,4 @@ Here are some things to look forward to:
 * More languages to the supported language list
 * Makefile support
 * Use of compiler flags for compiled languages
+* Run files by path, not just the current buffer file
