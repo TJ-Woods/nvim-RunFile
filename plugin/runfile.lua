@@ -9,18 +9,15 @@ end, {
 
         -- Define pairs of flags that cannot exist together
         local conflicts = {
-            ["--cleanup"] = "--no-cleanup",
-            ["--no-cleanup"] = "--cleanup",
-            ["--auto-close"] = "--no-auto-close",
-            ["--no-auto-close"] = "--auto-close",
-            ["--split"] = "--vsplit",
-            ["--split"] = "--float",
-            ["--vsplit"] = "--split",
-            ["--vsplit"] = "--float",
-            ["--float"] = "--split",
-            ["--float"] = "--vsplit",
-            ["--true-terminal"] = "--false-terminal",
-            ["--false-terminal"] = "--true-terminal",
+            ["--cleanup"] = { "--no-cleanup" },
+            ["--no-cleanup"] = { "--cleanup" },
+            ["--auto-close"] = { "--no-auto-close" },
+            ["--no-auto-close"] = { "--auto-close" },
+            ["--split"] = { "--vsplit", "--float" },
+            ["--vsplit"] = { "--split", "--float" },
+            ["--float"] = { "--split", "--vsplit" },
+            ["--true-terminal"] = { "--false-terminal" },
+            ["--false-terminal"] = { "--true-terminal" },
         }
 
         local ft = M.get_filetype()
@@ -37,12 +34,9 @@ end, {
             table.insert(options, "--no-run")  -- Alias for --run false
             table.insert(options, "--build")   -- Alias for --run false
 
-            conflicts["--run"] = "--no-run"
-            conflicts["--run"] = "--build"
-            conflicts["--no-run"] = "--run"
-            conflicts["--no-run"] = "--build"
-            conflicts["--build"] = "--run"
-            conflicts["--build"] = "--no-run"
+            conflicts["--run"] = { "--no-run", "--build" }
+            conflicts["--no-run"] = { "--run", "--build" }
+            conflicts["--build"] = { "--run", "--no-run" }
         end
 
         -- Split the current command line by spaces to see what's already typed
@@ -55,7 +49,9 @@ end, {
             excluded[arg] = true
             -- If that flag has a known conflict, exclude the conflicting twin too
             if conflicts[arg] then
-                excluded[conflicts[arg]] = true
+                for _, confl_arg in ipairs(current_args[arg]) do
+                    excluded[confl_arg] = true
+                end
             end
         end
 
