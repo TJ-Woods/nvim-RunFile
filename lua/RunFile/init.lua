@@ -481,6 +481,9 @@ function M.run_file(opts)
             end
         end
 
+    elseif ext == "html" then
+        cmd = 'xdg-open "' .. file_name .. '"'
+
     elseif ext == "ps1" then
         cmd = 'powershell "' .. file_name .. '"'
 

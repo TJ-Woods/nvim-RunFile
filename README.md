@@ -12,13 +12,14 @@ Neovim plugin that runs files in the terminal
 - [x] Shell (.sh)
 - [x] Odin (.odin) \[option to use build file]
 - [ ] JavaScript (.js) \[limited]
+- [ ] HTML (.html) \[experimental] \[limited]
 
 More to come!
 
 ----------
 # Current Issues
 * Limited language availability.
-* Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently close the buffer.
+* Performing a keyboard interrupt in true_terminal will also terminate the terminal and subsequently limit the buffer to read-only, as if it were false_terminal.
 * Only the file of the current buffer can be run.
 
 ----------
